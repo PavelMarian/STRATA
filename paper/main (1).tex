@@ -318,17 +318,18 @@ hand-made maps, and the 34 controls run on the drafts. Names and dates
 suffice except for snapshots, which the LLM agent finds. Caught and flagged
 mean LEAK or UNCHECKABLE.}
 \label{tab:init}
-\begin{tabular}{@{}lrr@{}}
+\begin{tabular}{@{}lrrr@{}}
 \toprule
-& Heuristic & LLM agent \\
+& Heuristic & LLM agent & Of \\
 \midrule
-Row times as in the map            & 18/26      & 23/26 \\
-Late-filled dates found (extra)    & 12/14 (22) & 13/14 (19) \\
-Snapshot columns caught            & 5/50       & 50/50 \\
+Row times as in the map            & 18 & 23 & 26 \\
+Late-filled dates found            & 12 & 13 & 14 \\
+Late-filled dates not in the map   & 22 & 19 & \\
+Snapshot columns caught            & 5  & 50 & 50 \\
 \midrule
-Leaking controls caught            & 23/25      & 25/25 \\
-Verdict as expected                & 26/34      & 30/34 \\
-Correct controls flagged           & 3/9        & 3/9 \\
+Leaking controls caught            & 23 & 25 & 25 \\
+Verdict as expected                & 26 & 30 & 34 \\
+Correct controls flagged           & 3  & 3  & 9 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -415,7 +416,7 @@ Demo (project page, workbench, live run, usage instructions):
 \url{https://jrzkaminski-strata-demo.static.hf.space}. Code, tests, the
 schemas and replay scripts for Olist, RelBench and PITBench, run logs, the
 27 agent-written scripts with replay inputs, and the skill file:
-\todo{GitHub / Zenodo URL}, \todo{license}.
+\url{https://github.com/PavelMarian/STRATA}, \todo{license}.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
