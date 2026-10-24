@@ -20,6 +20,8 @@ h1 { font: 800 clamp(34px, 6vw, 56px)/1.05 var(--display); margin: 0 0 12px; let
 .cta { display: inline-block; background: var(--accent); color: var(--accent-ink); font: 700 22px var(--display); padding: 16px 30px; border-radius: 12px; text-decoration: none; box-shadow: 0 6px 24px rgba(43,90,158,.25) }
 .cta:hover { filter: brightness(1.08) }
 .cta small { display: block; font: 400 13px var(--font); opacity: .85 }
+.authors { margin: 0 0 28px; font-size: 16px; font-weight: 500 }
+.authors span { color: var(--muted); font-weight: 400 }
 .links { margin: 18px 0 40px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 15px }
 .links a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent }
 .links a:hover { border-color: var(--accent) }
@@ -44,6 +46,7 @@ th { color: var(--muted); font-weight: 500 }
 <main>
   <h1>STRATA finds where an ML pipeline reads the future.</h1>
   <p class="lead">A checker for pipelines over time-stamped relational data, made for code that coding agents write. It runs your code on the data as it is and as it was at prediction time, and tells you where the two disagree.</p>
+  <p class="authors">Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky<br><span>AI Institute, ITMO University</span></p>
   <a class="cta" href="index.html">Open the demo <small>a workbench with recorded runs on real data, nothing to install</small></a>
   <div class="links">
     <a href="#" id="repo">Source code</a>
@@ -100,12 +103,10 @@ strata check features --schema schema.json --program feats.py:get_features --ent
   <h2>What came before?</h2>
   <p>PITFALL studied point-in-time leakage in generated feature code on one database with a handwritten oracle. PITBench brought eight databases to one contract: an availability map, control programs with known verdicts and a reference pipeline each. STRATA is the checker that works on any of them, and on a database it has never seen, from a schema alone.</p>
 
-  <h2>Who made it?</h2>
-  <p>Pavel Marian, Stanislav Chumakov, Danil Ezhov and Alexander Boukhanovsky, AI Institute, ITMO University.</p>
   </div>
 
   <p style="margin-top:40px"><a class="cta" href="index.html">Open the demo</a></p>
-  <p class="foot">STRATA 0.1.0 · Python, pandas · 38 tests · ICSE 2027 Tool Demonstration and Data Showcase</p>
+  <p class="foot">Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky · AI Institute, ITMO University<br>STRATA 0.1.0 · Python, pandas · 38 tests · ICSE 2027 Tool Demonstration and Data Showcase</p>
 </main>
 </body>
 </html>
