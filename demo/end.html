@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STRATA end card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* The last frame of the video: one screen, no scrolling. */
+:root { --bg: #0f141b; --panel: #182029; --line: #2a3542; --ink: #e4e9f0; --muted: #8b98a9; --accent: #5b9cf5; --leak: #ff6b5e; --clean: #4cd98a; --unk: #f3c46b;
+  --font: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; --display: "Fraunces", Georgia, serif }
+* { box-sizing: border-box }
+html, body { height: 100%; margin: 0 }
+body { background: var(--bg); color: var(--ink); font: 18px/1.5 var(--font); display: flex; align-items: center; justify-content: center }
+main { width: min(1100px, 92vw) }
+.logo { display: flex; align-items: center; gap: 12px; font: 700 26px var(--font); letter-spacing: .06em; margin-bottom: 26px }
+.logo svg { width: 34px; height: 34px }
+h1 { font: 600 clamp(30px, 4vw, 48px)/1.12 var(--display); margin: 0 0 14px }
+.rule { font: 600 26px/1.3 var(--display); margin: 0 0 30px; color: var(--muted) }
+.rule span { color: var(--accent) }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px 40px; margin-bottom: 34px }
+.grid h3 { margin: 0 0 6px; font: 500 12.5px var(--font); color: var(--muted); text-transform: uppercase; letter-spacing: .06em }
+.grid p { margin: 0 }
+pre { margin: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; font: 15px/1.6 var(--mono) }
+.verdicts { display: flex; gap: 12px; flex-wrap: wrap; font: 600 14px var(--mono) }
+.verdicts span { padding: 4px 12px; border-radius: 8px; border: 1px solid var(--line) }
+.v-leak { color: var(--leak) } .v-clean { color: var(--clean) } .v-unk { color: var(--unk) }
+.foot { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; color: var(--muted); font-size: 15px; border-top: 1px solid var(--line); padding-top: 18px }
+.foot b { color: var(--ink); font-weight: 500 }
+.foot code { font-family: var(--mono); color: var(--accent) }
+</style>
+</head>
+<body>
+<main>
+  <div class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="currentColor"><rect x="3" y="4" width="11" height="4" rx="1.2"/><rect x="3" y="10" width="11" height="4" rx="1.2"/><rect x="3" y="16" width="11" height="4" rx="1.2"/><rect x="14" y="4" width="7" height="4" rx="1.2" opacity=".3"/><rect x="14" y="10" width="7" height="4" rx="1.2" opacity=".3"/><rect x="14" y="16" width="7" height="4" rx="1.2" opacity=".3"/></g><line x1="14" y1="1.5" x2="14" y2="22.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>STRATA</div>
+  <h1>Layer-by-layer point-in-time checking of ML pipelines written by coding agents</h1>
+  <p class="rule">output on <span>D</span> &nbsp;=&nbsp; output on <span>D as of <i>t</i></span></p>
+  <div class="grid">
+    <div><h3>Five layers, one rule</h3><p>task, features, model, in-context examples, agent. STRATA runs each on the data as it is and as it was at <i>t</i>, and compares.</p></div>
+    <div><h3>Verdicts</h3><div class="verdicts"><span class="v-leak">LEAK + witness</span><span class="v-clean">CLEAN at tested times</span><span class="v-unk">UNCHECKABLE</span><span>ERROR</span></div></div>
+    <div><h3>Get started</h3><pre>pip install -e .
+strata init --data csvs/ --out schema.json
+strata check features --schema schema.json \
+    --program feats.py:get_features --entity product</pre></div>
+    <div><h3>For coding agents</h3><p>Exit codes 0, 1, 2, 3 and a JSON witness make every check a gate. Drop <code style="font-family:var(--mono);color:var(--accent)">SKILL.md</code> into the agent's skills and it runs the check before reporting a score.</p></div>
+  </div>
+  <div class="foot">
+    <span><b>Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky</b><br>AI Institute, ITMO University</span>
+    <span style="text-align:right"><b>Demo</b><br><code>jrzkaminski-strata-demo.static.hf.space</code>, ICSE 2027 Tool Demonstration</span>
+  </div>
+</main>
+</body>
+</html>
