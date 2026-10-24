@@ -12,6 +12,7 @@
 | `demo/alt/index.html` | рабочий стол: база, пример, «Run check», «Schema», «What is STRATA?», «Download skill» |
 | `demo/alt/data.js` | записанные прогоны, программы, схема Olist с обоснованиями LLM, предсказания модели и агента, таблица PITBench, текст SKILL.md |
 | `demo/alt/scenes.json` | текст сцен для озвучки в формате скилла `video-voiceover` |
+| `demo/alt/live.html`, `live_glue.py`, `data/olist/` | живой запуск: модель по ключу OpenRouter пишет программу или схему по редактируемому промпту, проверка STRATA идёт в браузере (Pyodide) на выборке из 3000 заказов Olist; страницу открывать с сервера от корня репо |
 
 Примеры в интерфейсе (все с записанными прогонами):
 

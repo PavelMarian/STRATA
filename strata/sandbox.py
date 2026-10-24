@@ -78,6 +78,14 @@ def call_isolated(target, args, timeout=60, mem_mb=4096, keep_env=()):
     """Call target(*args) in a forked child. `target` is a callable or a
     'file.py:function' spec. Arguments reach the child through fork, so large
     databases are not copied or pickled; only the result is."""
+    if sys.platform == "emscripten" or os.environ.get("STRATA_INPROCESS"):
+        # No fork (browser / Pyodide): run in this process; the timeout and
+        # memory limit do not apply. For demos and tests only.
+        try:
+            fn = load_callable(target) if isinstance(target, str) else target
+            return fn(*args)
+        except BaseException as e:  # noqa: BLE001
+            raise ProgramError(f"{type(e).__name__}: {e}\n{traceback.format_exc(limit=3)}") from e
     ctx = mp.get_context("fork")
     parent, child = ctx.Pipe(duplex=False)
     p = ctx.Process(target=_child, args=(child, target, args, mem_mb, keep_env), daemon=True)

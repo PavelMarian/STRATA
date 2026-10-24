@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STRATA live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,700&display=swap">
+<style>
+/* Live page: a model of your choice writes the code or the schema from an editable
+   prompt, and STRATA checks it here in the browser (Pyodide) on a 3 000-order
+   sample of Olist. The API key stays in this tab; it is sent only to OpenRouter. */
+:root {
+  --bg: #0f141b; --bar: #151c26; --panel: #182029; --panel2: #1e2833; --line: #2a3542;
+  --ink: #e4e9f0; --muted: #8b98a9; --dim: #5c6878; --accent: #5b9cf5; --accent-ink: #0b1220;
+  --leak: #ff6b5e; --leak-bg: #3a1d1b; --clean: #4cd98a; --clean-bg: #163125; --unk: #f3c46b; --unk-bg: #3b2f14; --err: #c48cff;
+  --font: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace; --display: "Bricolage Grotesque", var(--font);
+}
+* { box-sizing: border-box }
+html, body { height: 100%; margin: 0 }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font); display: flex; flex-direction: column }
+button, select, input, textarea { font: inherit; color: inherit }
+button { cursor: pointer; border: 1px solid var(--line); background: var(--panel2); border-radius: 8px; padding: 6px 12px }
+button:hover { border-color: var(--accent) }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600 }
+button:disabled { opacity: .5; cursor: default }
+button.ghost { background: transparent }
+select, input { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px }
+textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font: 12.5px/1.5 var(--mono); resize: vertical; color: var(--ink) }
+a { color: var(--accent); text-decoration: none } a:hover { text-decoration: underline }
+code, .mono { font-family: var(--mono) }
+.bar { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--bar); border-bottom: 1px solid var(--line); flex-wrap: wrap }
+.logo { display: flex; align-items: center; gap: 8px; font: 700 18px var(--display); letter-spacing: .04em; margin-right: 8px }
+.logo svg { width: 22px; height: 22px }
+.logo small { font: 500 11px var(--font); color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 0 8px; letter-spacing: .08em }
+.bar label { color: var(--muted); font-size: 12px }
+.bar .spacer { flex: 1 }
+.bar .links a { color: var(--muted); margin-left: 14px; font-size: 13px }
+.status { font-size: 12.5px; color: var(--muted); padding: 6px 16px; border-bottom: 1px solid var(--line); background: var(--panel) }
+.status b { color: var(--ink); font-weight: 500 }
+.status .ok { color: var(--clean) } .status .bad { color: var(--leak) }
+.tabs { display: flex; gap: 2px; padding: 10px 16px 0 }
+.tabs button { border-radius: 8px 8px 0 0; border-bottom: 0 }
+.tabs button[aria-selected="true"] { background: var(--panel); color: var(--accent); font-weight: 600 }
+.work { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1px; background: var(--line); min-height: 0; border-top: 1px solid var(--line) }
+.pane { background: var(--panel); display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: auto; padding: 14px 16px }
+.pane h3 { margin: 0 0 6px; font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .05em }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 10px 0 }
+.row .note { color: var(--muted); font-size: 12.5px }
+.card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; background: var(--panel2) }
+.card h3 { margin-bottom: 8px }
+.verdict { display: inline-block; font: 700 22px var(--display); padding: 4px 14px; border-radius: 8px; letter-spacing: .04em }
+.v-LEAK { color: var(--leak); background: var(--leak-bg) } .v-CLEAN { color: var(--clean); background: var(--clean-bg) } .v-UNCHECKABLE { color: var(--unk); background: var(--unk-bg) } .v-ERROR { color: var(--err); background: #2a1d3a }
+.wit { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px }
+.wit th, .wit td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; font-family: var(--mono); white-space: nowrap }
+.wit th { color: var(--muted); font-weight: 500; font-family: var(--font) }
+.wit td.full { color: var(--leak) } .wit td.att { color: var(--clean) }
+.term { background: #0b1016; border-radius: 8px; padding: 10px 12px; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; word-break: break-word; color: #c9d3df; margin: 0; max-height: 40vh; overflow: auto }
+.term .LEAK { color: var(--leak); font-weight: 600 } .term .CLEAN { color: var(--clean); font-weight: 600 } .term .UNCHECKABLE { color: var(--unk); font-weight: 600 } .term .ERROR { color: var(--err); font-weight: 600 }
+.list { margin: 0; padding-left: 18px } .list li { margin: 4px 0 }
+.f-error { color: var(--leak) } .f-warning { color: var(--unk) }
+details { margin-top: 8px } summary { cursor: pointer; color: var(--muted); font-size: 12.5px }
+.empty { color: var(--muted); padding: 24px 8px; text-align: center }
+.hidden { display: none }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 30 }
+@media (max-width: 900px) { .work { grid-template-columns: 1fr } }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M6 12h12M8 17h8"/></svg>STRATA <small>LIVE</small></div>
+  <label for="key">OpenRouter key</label>
+  <input id="key" type="password" placeholder="sk-or-…" autocomplete="off" style="width:220px">
+  <label for="model">Model</label>
+  <select id="model" style="max-width:300px"><option value="anthropic/claude-opus-5.5">anthropic/claude-opus-5.5</option></select>
+  <input id="modelFree" placeholder="or any OpenRouter model id" style="width:220px">
+  <div class="spacer"></div>
+  <span class="links"><a href="index.html">Workbench</a><a href="#" id="btnAbout">What is STRATA?</a></span>
+</header>
+<div class="status" id="status">Loading the Python runtime…</div>
+
+<div class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="features">Write a feature program and check it</button>
+  <button role="tab" aria-selected="false" data-tab="schema">Draft the availability schema</button>
+</div>
+
+<!-- features -->
+<main class="work" id="tab-features">
+  <section class="pane">
+    <h3>1. Prompt to the model</h3>
+    <textarea id="prompt" rows="12"></textarea>
+    <div class="row"><button class="primary" id="ask">Ask the model</button><span class="note" id="askNote">The prompt never mentions leakage, as in the paper's corpus.</span></div>
+    <h3 style="margin-top:14px">2. Program under test</h3>
+    <textarea id="code" rows="18" spellcheck="false" placeholder="def get_features(db, entity_ids, t): ..."></textarea>
+    <div class="row"><span class="note">Or load a recorded program:</span><button class="ghost" data-ex="leaky">leaky</button><button class="ghost" data-ex="fixed">fixed</button><button class="ghost" data-ex="status">reads order_status</button></div>
+    <div class="row">
+      <label class="note" for="times">Times t</label><input id="times" value="2018-01-01,2018-04-01,2018-07-01" style="width:260px">
+      <label class="note" for="nent">Entities per t</label><select id="nent"><option>8</option><option selected>15</option><option>40</option></select>
+      <button class="primary" id="run" disabled>Run check in the browser</button>
+    </div>
+    <p class="note" style="margin:4px 0 0">The check runs on a 3 000-order sample of Olist, with the schema from the paper, in this tab. Verdicts on the sample can differ from the full database.</p>
+  </section>
+  <section class="pane" id="out-features"><div class="empty">Ask the model or load a program, then run the check.</div></section>
+</main>
+
+<!-- schema -->
+<main class="work hidden" id="tab-schema">
+  <section class="pane">
+    <h3>System prompt of the schema agent (editable)</h3>
+    <textarea id="sysPrompt" rows="16"></textarea>
+    <div class="row">
+      <label class="note"><input type="checkbox" id="samples" checked> send sample values</label>
+      <label class="note" for="rounds">Revision rounds</label><select id="rounds"><option>0</option><option selected>1</option><option>2</option></select>
+      <button class="primary" id="draft" disabled>Draft the schema</button>
+    </div>
+    <p class="note">What the model receives: this system prompt, a profile of the seven files (columns, types, date ranges, up to three sample values) and STRATA's heuristic draft. Its answer is JSON in a fixed schema; STRATA checks every decision against the data and sends the findings back for revision. The model never produces a verdict or code.</p>
+    <details><summary>Show the user message (profile and heuristic draft)</summary><pre class="term" id="userMsg"></pre></details>
+  </section>
+  <section class="pane" id="out-schema"><div class="empty">Press <b>Draft the schema</b>.</div></section>
+</main>
+
+<div id="about" style="position:fixed;inset:0;background:rgba(5,8,12,.7);display:none;align-items:center;justify-content:center;z-index:20;padding:24px"><div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(1000px,100%);max-height:100%;overflow:auto;padding:18px 22px"><div style="text-align:right"><button class="ghost" id="aboutClose">Close</button></div><div id="aboutBody"></div></div></div>
+
+<script src="data.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const colorize = t => esc(t).replace(/\b(LEAK|CLEAN|UNCHECKABLE|ERROR)\b/g, '<span class="$1">$1</span>');
+const V = v => `<span class="verdict v-${v}">${v}</span>`;
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2600) }
+const status = (t, cls) => { $("#status").innerHTML = cls ? `<span class="${cls}">${t}</span>` : t; };
+
+// ---------- where the sources live (served from the repository root) ----------
+const SRC = "../../";
+const MODS = ["__init__", "__main__", "checks", "cli", "compare", "evidence", "infer", "llm_init", "profile", "sandbox", "schema", "verdict"];
+const CSVS = ["olist_orders_dataset", "olist_order_items_dataset", "olist_order_reviews_dataset", "olist_order_payments_dataset", "olist_customers_dataset", "olist_products_dataset", "olist_sellers_dataset"];
+const DATA_DIR = "/data/olist";
+let py = null, tables = null, schemaMsgs = null;
+
+// ---------- tabs ----------
+$$(".tabs button").forEach(b => b.onclick = () => { $$(".tabs button").forEach(x => x.setAttribute("aria-selected", String(x === b))); $$("main.work").forEach(m => m.classList.toggle("hidden", m.id !== "tab-" + b.dataset.tab)); });
+
+// ---------- key and model ----------
+try { $("#key").value = sessionStorage.getItem("or_key") || ""; } catch (e) {}
+$("#key").oninput = () => { try { sessionStorage.setItem("or_key", $("#key").value) } catch (e) {} };
+const keyOrAsk = () => { const k = $("#key").value.trim(); if (!k) { toast("Paste an OpenRouter API key first"); $("#key").focus(); } return k; };
+const modelId = () => $("#modelFree").value.trim() || $("#model").value;
+const PROVIDERS = ["anthropic/", "openai/", "google/", "deepseek/", "qwen/", "x-ai/", "mistralai/", "meta-llama/"];
+(async () => {
+  try {
+    const r = await fetch("https://openrouter.ai/api/v1/models"); const ids = (await r.json()).data.map(m => m.id).filter(id => !id.includes(":")).filter(id => PROVIDERS.some(p => id.startsWith(p)));
+    ids.sort((a, b) => PROVIDERS.findIndex(p => a.startsWith(p)) - PROVIDERS.findIndex(p => b.startsWith(p)) || a.localeCompare(b));
+    const sel = $("#model"); sel.innerHTML = ""; ids.forEach(id => sel.append(new Option(id, id))); sel.value = ids.includes("anthropic/claude-opus-5.5") ? "anthropic/claude-opus-5.5" : ids[0];
+  } catch (e) { /* keep the static default */ }
+})();
+
+async function openrouter(payload) {
+  const key = keyOrAsk(); if (!key) throw new Error("no key");
+  const r = await fetch("https://openrouter.ai/api/v1/chat/completions", {method: "POST", headers: {"Authorization": "Bearer " + key, "Content-Type": "application/json", "HTTP-Referer": location.origin, "X-Title": "STRATA live demo"}, body: JSON.stringify(payload)});
+  const j = await r.json();
+  if (j.error) throw new Error("OpenRouter: " + (j.error.message || JSON.stringify(j.error)).slice(0, 300));
+  return j.choices[0];
+}
+
+// ---------- Pyodide: STRATA itself, in the browser ----------
+async function boot() {
+  const t0 = performance.now();
+  status("Loading the Python runtime (about 15 MB on first visit)…");
+  py = await loadPyodide({indexURL: "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/"});
+  for (let i = 1; i <= 3; i++) {
+    status(`Loading pandas${i > 1 ? ` (retry ${i})` : ""}…`); await py.loadPackage(["pandas"]);
+    try { py.runPython("import pandas"); break; } catch (e) { if (i === 3) throw new Error("pandas did not load from the Pyodide CDN; reload the page"); }
+  }
+  status("Loading STRATA sources and the Olist sample…");
+  py.FS.mkdir("/strata"); py.FS.mkdir("/data"); py.FS.mkdir(DATA_DIR);
+  const get = async p => { const r = await fetch(p); if (!r.ok) throw new Error("cannot fetch " + p + " (serve the repository root)"); return r.text(); };
+  await Promise.all([
+    ...MODS.map(async m => py.FS.writeFile(`/strata/${m}.py`, await get(`${SRC}strata/${m}.py`))),
+    ...CSVS.map(async c => py.FS.writeFile(`${DATA_DIR}/${c}.csv`, await get(`data/olist/${c}.csv`))),
+    (async () => py.FS.writeFile("/live_glue.py", await get("live_glue.py")))(),
+  ]);
+  const schemaJson = await get(`${SRC}examples/olist/schema.json`);
+  py.runPython("import sys; sys.path.insert(0, '/'); import live_glue");
+  const glue = py.pyimport("live_glue");
+  tables = JSON.parse(glue.setup(schemaJson, DATA_DIR));
+  schemaMsgs = JSON.parse(glue.schema_messages(DATA_DIR, true));
+  $("#sysPrompt").value = schemaMsgs.system; $("#userMsg").textContent = schemaMsgs.user;
+  $("#prompt").value = defaultPrompt();
+  $("#run").disabled = false; $("#draft").disabled = false;
+  status(`<span class="ok">STRATA ${py.runPython("import strata; strata.__version__ if hasattr(strata, '__version__') else '0.1.0'")} is running in this tab</span> on a 3 000-order Olist sample, ${tables.time_range[0].slice(0, 10)} to ${tables.time_range[1].slice(0, 10)}. Loaded in ${((performance.now() - t0) / 1000).toFixed(1)} s. The API key is sent only to OpenRouter; the check never sees it.`);
+  return glue;
+}
+function defaultPrompt() {
+  const cols = Object.entries(tables.tables).map(([t, c]) => `  ${t}: ${c.join(", ")}`).join("\n");
+  return `You write features for a prediction task over the Olist marketplace database.
+Task: for each product, predict whether it will be ordered in the 90 days after the prediction time t.
+
+Write a Python function get_features(db, entity_ids, t) -> pandas.DataFrame indexed by product_id, one row per id in entity_ids in that order, numeric columns only, no NaN.
+db is a dict of pandas DataFrames with these tables and columns (date columns are already datetime64; order_items.ts is the purchase time of the order):
+${cols}
+t is a pandas Timestamp. Use only pandas and numpy. Return one \`\`\`python block and nothing else.`;
+}
+const gluePromise = boot().catch(e => { status("Could not start: " + esc(e.message) + ". Serve the repository root, for example: python3 -m http.server 8767 (from the STRATA folder), then open /demo/alt/live.html.", "bad"); throw e; });
+
+// ---------- features tab ----------
+$$("[data-ex]").forEach(b => b.onclick = () => { $("#code").value = PROG[b.dataset.ex]; toast("Loaded the recorded program: " + b.textContent); });
+$("#ask").onclick = async () => {
+  const key = keyOrAsk(); if (!key) return;
+  $("#ask").disabled = true; $("#askNote").textContent = `Asking ${modelId()}…`;
+  try {
+    const c = await openrouter({model: modelId(), max_tokens: 4000, messages: [{role: "user", content: $("#prompt").value}]});
+    const text = c.message.content || ""; const m = /```(?:python)?\s*([\s\S]*?)```/.exec(text);
+    $("#code").value = (m ? m[1] : text).trim(); $("#askNote").textContent = `Program written by ${modelId()}. Edit it if you like, then run the check.`;
+  } catch (e) { $("#askNote").textContent = e.message; }
+  $("#ask").disabled = false;
+};
+$("#run").onclick = async () => {
+  const glue = await gluePromise; const code = $("#code").value; if (!code.trim()) { toast("No program to check"); return; }
+  $("#run").disabled = true; $("#out-features").innerHTML = '<div class="empty">Running on D and on D as of t…</div>';
+  await new Promise(r => setTimeout(r, 30));
+  try {
+    const r = JSON.parse(glue.run_features(code, $("#times").value, +$("#nent").value));
+    const w = r.witnesses || [];
+    let html = `<div class="card"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">${V(r.verdict)}<span style="color:var(--muted)">features layer, exit ${r.exit}${w.length ? `, ${w.length} witness${w.length > 1 ? "es" : ""}` : ""}</span></div>${r.notes.map(n => `<p>${esc(n)}</p>`).join("")}</div>`;
+    if (w.length) html += `<div class="card"><h3>Witnesses</h3><table class="wit"><tr><th>t</th><th>column</th><th>product</th><th>on D</th><th>as of t</th><th>channel</th></tr>${w.map(x => `<tr><td>${String(x.time).slice(0, 10)}</td><td>${esc(x.column)}</td><td>${esc(String(x.row)).slice(0, 8)}…</td><td class="full">${fmt(x.full)}</td><td class="att">${fmt(x.at_t)}</td><td>${(x.channels || []).join(", ") || "—"}</td></tr>`).join("")}</table></div>`;
+    html += `<div class="card"><h3>Console</h3><pre class="term">${colorize(r.summary)}</pre></div>`;
+    $("#out-features").innerHTML = html;
+  } catch (e) { $("#out-features").innerHTML = `<div class="card">${V("ERROR")}<pre class="term" style="margin-top:8px">${esc(String(e.message || e)).slice(0, 2000)}</pre></div>`; }
+  $("#run").disabled = false;
+};
+const fmt = v => typeof v === "number" ? +v.toFixed(4) : esc(String(v));
+
+// ---------- schema tab ----------
+$("#draft").onclick = async () => {
+  const glue = await gluePromise; const key = keyOrAsk(); if (!key) return;
+  $("#draft").disabled = true; const out = $("#out-schema"); out.innerHTML = "";
+  const log = t => { out.insertAdjacentHTML("beforeend", `<p class="note">${t}</p>`); };
+  try {
+    const msgs = JSON.parse(glue.schema_messages(DATA_DIR, $("#samples").checked));
+    const messages = [{role: "system", content: $("#sysPrompt").value}, {role: "user", content: msgs.user}];
+    const rounds = +$("#rounds").value; let result = null;
+    for (let rnd = 0; rnd <= rounds; rnd++) {
+      log(`Round ${rnd}: asking ${modelId()}…`);
+      const c = await openrouter({model: modelId(), max_tokens: 16000, messages, response_format: {type: "json_schema", json_schema: {name: "strata_schema", strict: true, schema: msgs.output_schema}}, provider: {require_parameters: true}});
+      if (["length", "max_tokens"].includes(c.finish_reason)) throw new Error("answer truncated at max_tokens");
+      const text = c.message.content || "";
+      result = JSON.parse(glue.schema_round(DATA_DIR, text));
+      const errors = result.findings.filter(f => f.level === "error").length;
+      log(`Round ${rnd}: ${errors} errors, ${result.findings.length - errors} warnings from the data check.`);
+      if (!result.findings.length || rnd === rounds) break;
+      messages.push({role: "assistant", content: text}, {role: "user", content: "STRATA checked this schema against the data. Findings:\n" + JSON.stringify(result.findings, null, 1) + "\nFix every error. For each warning, change the decision or keep it and say why in the table's reason. Return the complete schema again."});
+    }
+    out.insertAdjacentHTML("beforeend", `<div class="card"><h3>Decisions, with the model's reasons</h3><ul class="list">${result.review.map(l => `<li>${esc(l)}</li>`).join("")}</ul></div>`
+      + (result.findings.length ? `<div class="card"><h3>Open findings from the data check</h3><ul class="list">${result.findings.map(f => `<li><span class="f-${f.level}">${f.level.toUpperCase()}</span> ${esc(f.table)}.${esc(f.column)}: ${esc(f.message)}</li>`).join("")}</ul></div>` : `<div class="card"><h3>Data check</h3><p>No contradictions with the data.</p></div>`)
+      + (result.questions.length ? `<div class="card"><h3>Questions for the data owner</h3><ul class="list">${result.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ul></div>` : "")
+      + `<div class="card"><h3>schema.json</h3><div class="row"><button id="useSchema">Use this schema for the feature check</button><span class="note">The feature tab then runs on the drafted schema. Review it first; a verdict is only as good as its schema.</span></div><details open><summary>JSON</summary><pre class="term">${esc(JSON.stringify(result.schema, null, 1))}</pre></details></div>`);
+    $("#useSchema").onclick = () => { tables = JSON.parse(glue.setup(JSON.stringify(result.schema), DATA_DIR)); toast("Feature checks now use the drafted schema"); };
+  } catch (e) { out.insertAdjacentHTML("beforeend", `<div class="card">${V("ERROR")}<pre class="term" style="margin-top:8px">${esc(String(e.message || e)).slice(0, 2000)}</pre></div>`); }
+  $("#draft").disabled = false;
+};
+
+// ---------- what is STRATA ----------
+$("#btnAbout").onclick = async e => { e.preventDefault(); const m = $("#about"); m.style.display = "flex"; if ($("#aboutBody").innerHTML) return;
+  try { const html = await (await fetch("about.html")).text(); $("#aboutBody").innerHTML = new DOMParser().parseFromString(html, "text/html").querySelector("main").innerHTML; $$("#aboutBody .cta").forEach(x => x.remove()); } catch (e) { $("#aboutBody").innerHTML = '<a href="about.html">Project page</a>'; } };
+$("#aboutClose").onclick = () => $("#about").style.display = "none";
+$("#about").addEventListener("click", e => { if (e.target === $("#about")) $("#about").style.display = "none" });
+
+// deep links: ?example=leaky&run=1
+const q = new URLSearchParams(location.search);
+if (q.get("example")) $("#code").value = PROG[q.get("example")] || "";
+if (q.get("run")) gluePromise.then(() => $("#run").click());
+</script>
+</body>
+</html>
