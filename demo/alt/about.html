@@ -44,6 +44,16 @@ table.results td:first-child { width: 34%; font-weight: 500 }
 table.results td:first-child small { display: block; color: var(--muted); font-weight: 400 }
 th { color: var(--muted); font-weight: 500 }
 td b { font-family: var(--mono); font-weight: 500; color: var(--accent) }
+.tl { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 22px; margin: 12px 0 }
+.tl .ctl { display: block; font-size: 14px; color: var(--muted) } .tl .ctl span { font-family: var(--mono); color: var(--ink) }
+.tl input[type=range] { width: 100%; accent-color: var(--accent); margin: 6px 0 10px }
+.tl svg text { font: 11px var(--mono); fill: var(--muted) }
+.tl .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted) }
+.tl .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle }
+.tlpanel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; align-self: start }
+.tlpanel table { font-size: 14px } .tlpanel td.diffcell { color: var(--leak); font-weight: 600 }
+.tlpanel .small { font-size: 13.5px; color: var(--muted); margin: 10px 0 0 }
+@media (max-width: 700px) { .tl { grid-template-columns: 1fr } }
 .foot { color: var(--muted); font-size: 14px; margin-top: 48px; border-top: 1px solid var(--line); padding-top: 16px }
 </style>
 </head>
@@ -65,6 +75,21 @@ td b { font-family: var(--mono); font-weight: 500; color: var(--accent) }
 
   <h2>What is a point-in-time leak?</h2>
   <p>You train a model to predict what happens to a customer, a product or a driver after a date <i>t</i>. Everything the model sees for that prediction must have been known at <i>t</i>. A review written a week later, a delivery date filled in afterwards, an order status overwritten at the end of the data, a training row whose outcome came after <i>t</i>: each one inflates the offline score, and production never reaches it.</p>
+
+  <h2>See it on one product</h2>
+  <p>One Olist product, its orders and the reviews of those orders. A feature program that counts reviews of past orders without checking when each review was written also counts reviews from after <i>t</i>. Drag <i>t</i> to see when that happens.</p>
+  <div class="tl">
+    <div>
+      <label class="ctl" for="tSlider">Prediction time t: <span id="tLabel"></span><input id="tSlider" type="range" min="0" max="100" value="30"></label>
+      <svg id="timeline" viewBox="0 0 640 230" width="100%" role="img" aria-label="Orders and reviews over time"></svg>
+      <div class="legend"><span><i style="background:var(--accent)"></i>order placed before t</span><span><i style="background:var(--unk)"></i>review written by t</span><span><i style="background:var(--leak)"></i>review of a past order, written after t</span></div>
+    </div>
+    <div class="tlpanel">
+      <p style="margin:0 0 6px"><span id="tVerdict" class="verd"></span></p>
+      <table><thead><tr><th>Feature</th><th>Full</th><th>As of t</th></tr></thead><tbody id="tTable"></tbody></table>
+      <p class="small" id="tNote"></p>
+    </div>
+  </div>
 
   <h2>Why coding agents make it worse</h2>
   <p>An agent writes the whole pipeline, often over a database nobody has annotated. The code runs, the tests pass, the metric is high. The leak can sit in any of five places, and a check of one place passes a pipeline that leaks in another. In our corpus, scripts that cut their features correctly still trained on outcomes from the future.</p>
@@ -110,7 +135,9 @@ strata check features --schema schema.json --program feats.py:get_features --ent
   <p class="foot">Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky. AI Institute, ITMO University.<br>STRATA 0.1.0, Python and pandas, 38 tests. ICSE 2027 Tool Demonstration and Data Showcase.</p>
 </main>
 <script src="data.js"></script>
+<script src="timeline.js"></script>
 <script>
+initTimeline(document);
 const dl = () => { try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([SKILL], {type: "text/markdown"})); a.download = "SKILL.md"; document.body.appendChild(a); a.click(); a.remove() } catch (e) { location.href = "../../SKILL.md" } };
 document.querySelectorAll("[data-skill]").forEach(b => b.onclick = dl);
 </script>

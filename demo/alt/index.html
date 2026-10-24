@@ -126,6 +126,14 @@ code, pre, .mono { font-family: var(--mono) }
 .sheet-body.about table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 6px 0 }
 .sheet-body.about th, .sheet-body.about td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
 .sheet-body.about th { color: var(--muted); font-weight: 500 } .sheet-body.about td b { font-family: var(--mono); font-weight: 500; color: var(--accent) }
+.sheet-body.about .tl { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; margin: 10px 0 }
+.sheet-body.about .tl .ctl { display: block; font-size: 13px; color: var(--muted) } .sheet-body.about .tl .ctl span { font-family: var(--mono); color: var(--ink) }
+.sheet-body.about .tl input[type=range] { width: 100%; accent-color: var(--accent); margin: 6px 0 8px }
+.sheet-body.about .tl svg text { font: 11px var(--mono); fill: var(--muted) }
+.sheet-body.about .tl .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted) }
+.sheet-body.about .tl .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle }
+.sheet-body.about .tlpanel { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; align-self: start }
+.sheet-body.about .tlpanel td.diffcell { color: var(--leak); font-weight: 600 } .sheet-body.about .tlpanel .small { font-size: 12.5px; color: var(--muted); margin: 8px 0 0 }
 .sheet-body.about .foot { color: var(--muted); font-size: 12.5px; margin-top: 20px; border-top: 1px solid var(--line); padding-top: 10px }
 
 /* schema viewer */
@@ -199,6 +207,7 @@ code, pre, .mono { font-family: var(--mono) }
 </div></div>
 
 <script src="data.js"></script>
+<script src="timeline.js"></script>
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
@@ -373,6 +382,7 @@ $("#btnAbout").onclick = async () => {
     const main = new DOMParser().parseFromString(html, "text/html").querySelector("main");
     $("#aboutBody").innerHTML = main.innerHTML; aboutLoaded = true;
     $$("#aboutBody [data-skill]").forEach(b => b.onclick = dl);
+    initTimeline($("#aboutBody"));
     const m = {"#aboutBody #repo": "#lnkRepo", "#aboutBody #paper": "#lnkPaper"}; for (const k in m) { const a = $(k), src = $(m[k]); if (a && src) a.href = src.href; }
   } catch (e) { $("#aboutBody").innerHTML = '<p>The project page could not be loaded here. <a href="about.html">Open it as a page.</a></p>'; }
 };
