@@ -1,5 +1,5 @@
 % ICSE 2027 Tool Demonstration and Data Showcase
-\documentclass[conference]{IEEEtran}
+\documentclass[10pt,conference]{IEEEtran}
 \usepackage[T1]{fontenc}
 \usepackage{cite}
 \usepackage{amsmath,amssymb}
@@ -22,7 +22,7 @@
 \author{
 \IEEEauthorblockN{Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky}
 \IEEEauthorblockA{AI Institute, ITMO University, Saint Petersburg, Russian Federation\\
-\{pmarian, svchumakov, doezhov\}@itmo.ru, boukhanovsky@mail.ifmo.ru}
+\{pmarian, svchumakov\}@itmo.ru}
 }
 
 \maketitle
@@ -93,12 +93,10 @@ its own.
 
 \begin{figure*}[t]
 \centering
-\resizebox{\textwidth}{!}{\input{fig_workflow}}
-\caption{STRATA workflow. The availability schema is drafted from the raw
-files and reviewed once; the database states derived from it feed the layer
-checks, which run the code under test unmodified in a sandbox and compare
-its outputs. The verdict goes back to the coding agent, which repairs the
-pipeline or refines the schema.}
+\resizebox{.8\textwidth}{!}{\input{fig_workflow}}
+\caption{STRATA workflow: the schema drafted from the raw files and reviewed
+once, the database states derived from it, the layer checks that run the
+code unmodified in a sandbox, and the verdict that goes back to the agent.}
 \label{fig:arch}
 \end{figure*}
 
@@ -158,40 +156,35 @@ nondeterminism.
 0/1/2/3 for CLEAN/LEAK/UNCHECKABLE/ERROR
 and a JSON report whose witness names the time, entity, column and channel.
 Code under test runs in a forked child with a timeout, a memory limit and an
-environment stripped of API keys. A SKILL.md file, says when to call
+environment stripped of API keys. A SKILL.md file says when to call
 which check, how to read a witness, that only a rerun may declare a leak
-fixed, and that CLEAN is not a proof. Exit codes also make the
-checks a CI gate. The checker is about 1{,}300 lines of Python on pandas with 38 tests over
-a synthetic database; the
-examples for all ten databases differ only in schema files and command
-templates.
+fixed, and that CLEAN is not a proof. The checker is about 1{,}300 lines of
+Python on pandas with 38 tests; the examples for all ten databases differ
+only in schema files and command templates.
 
 % ---------------------------------------------------------------------------
 \section{Demonstration}
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{demo_workbench.png}
-\caption{The demo workbench on a recorded run. Left: a feature program a
-code model wrote for Olist. Right: the verdict and its witnesses, with the
-time, the product, both values and the channel (the reviews table).}
+\includegraphics[width=.86\columnwidth]{demo_workbench.png}
+\caption{The demo workbench on a recorded run: the program under test, the
+verdict and its witnesses (time, product, both values, channel).}
 \label{fig:demo}
 \end{figure}
 
 The demo is a browser workbench over recorded \tool{} runs on real data
-(Fig.~\ref{fig:demo}): a database and an example at the top, the code under
-test on the left, the diagnosis and the console on the right. A feature
-program written by a code model for Olist gets LEAK, localized to the
-reviews table, is repaired in place and rerun CLEAN; a program that reads
-order\_status gets UNCHECKABLE with the output columns that depend on it.
-The schema viewer shows the drafted Olist schema with the LLM agent's reason
-per table. An agent-written RelBench~\cite{relbench} training script leaks
-in the model check, with every driver's prediction before and after the
-later rows are added; a second script gets UNCHECKABLE in the identity
-check because its two anonymizations disagree. A second page runs \tool{}
-itself in the browser on a sample of Olist: a model chosen by the viewer
-writes the feature program or drafts the schema from an editable prompt,
-and the checks run on the result.
+(Fig.~\ref{fig:demo}). A feature program written by a code model for Olist
+gets LEAK, localized to the reviews table, is repaired in place and rerun
+CLEAN; a program that reads order\_status gets UNCHECKABLE with the output
+columns that depend on it. The schema viewer shows the drafted Olist schema
+with the LLM agent's reason per table. An agent-written
+RelBench~\cite{relbench} script leaks in the model check; a second script
+gets UNCHECKABLE in the identity check because its two anonymizations
+disagree.
+A second page runs \tool{} itself in the browser on a sample of Olist: a
+model chosen by the viewer writes the program or drafts the schema from an
+editable prompt, and the checks run on the result.
 
 % ---------------------------------------------------------------------------
 \section{Evaluation}
@@ -246,10 +239,9 @@ map was translated into a \tool{} schema mechanically (time columns,
 late-filled dates, snapshot columns as dated or null stamps), and
 the controls ran unmodified at six times each. Table~\ref{tab:pitbench}
 shows that a schema is all a new database needs: the verdicts do not depend
-on the domain, the size or the leak classes of the database, and the
-localized channel is the one the control leaks through
-(rental.return\_date, product.list\_price). The schema,
-in turn, decides what can be seen. Declaring the snapshot columns
+on the domain, size or leak classes, and the localized channel is the one
+the control leaks through (rental.return\_date, product.list\_price). The
+schema, in turn, decides what can be seen. Declaring the snapshot columns
 unknown turns the 8 snapshot and aggregate controls into
 UNCHECKABLE and changes nothing else; a naive F1 schema that times
 results at midnight lets the leak at the race-day boundary pass as
@@ -262,10 +254,8 @@ some output were labelled by hand as violations or not.
 select\_entities, get\_features and fit\_predict
 are checked like features, make\_label by the label check. In the
 code and in the output, a harmless mutant (a longer window into the past, a
-stricter cut, a window moved past $t$ behind a remaining cut) looks like a
-violation; only the comparison with the database at $t$ tells them apart,
-and the mutant columns of Table~\ref{tab:pitbench} show that it does so on
-every database. Most violations sit outside the feature code: the training
+stricter cut) looks like a violation; only the comparison with the database
+at $t$ tells them apart, on every database (Table~\ref{tab:pitbench}). Most violations sit outside the feature code: the training
 routine fires in 32 kills and the label check in 19, and three kills need
 the probe of the lower bound.
 
@@ -322,11 +312,10 @@ CLEAN (71) & 16 & 35 & 20 & 0 & delivery dates \\
 \begin{table}[t]
 \centering\footnotesize
 \setlength{\tabcolsep}{4pt}
-\caption{Names and dates suffice for row times and late-filled dates but
-not for snapshots; the LLM agent finds them, and only its drafts let no leak
-pass. Drafted schemas on the eight PITBench databases against the hand-made
-maps, and the 34 controls run on the drafts. Caught and flagged mean LEAK
-or UNCHECKABLE.}
+\caption{Drafted schemas on the eight PITBench databases against the
+hand-made maps, and the 34 controls run on the drafts. Names and dates
+suffice except for snapshots, which the LLM agent finds. Caught and flagged
+mean LEAK or UNCHECKABLE.}
 \label{tab:init}
 \begin{tabular}{@{}lrr@{}}
 \toprule
@@ -348,8 +337,7 @@ PITBench databases were drafted from the raw files alone, with the
 heuristics and with the agent (Claude Opus 5.5 without tool access, so the
 maps could not be read). Snapshots decide the outcome: on the heuristic
 drafts two F1 leaks (race-day boundary, career totals) pass as
-CLEAN, on the agent's drafts none does. The flags on correct
-controls differ in kind. The heuristics take a wrong date as the row time
+CLEAN, on the agent's drafts none does. The heuristics take a wrong date as the row time
 (the shipped date of Northwind orders, the date from which the PKDD'99
 district statistics are known), and the missing rows look like a leak. The
 agent's flags are cautious or deliberate: it declares two mutable columns
@@ -357,17 +345,15 @@ unknown (Northwind freight, Sakila payment amount), which gives
 UNCHECKABLE, and it times Olist reviews by the customer's answer,
 not by the survey date, since the score does not exist before the answer.
 It kept that decision with a reason when the data check queried it and
-listed it as a question for the data owner; the map and the Olist corpus
-above use the survey date. A schema takes 1--3 calls, about a minute per
-database; two runs differ in one decision.
+listed it as a question for the data owner. A schema takes 1--3 calls, about
+a minute per database; two runs differ in one decision.
 
 \begin{table}[t]
 \centering\footnotesize
 \setlength{\tabcolsep}{2.6pt}
-\caption{All 27 agent-written training runs learn from rows after $t$,
-and a metric gain would not have shown it: every script's scores move, but
-the query AUC does not rise in 3--4 of the 9 runs of each task. RelBench,
-9 scripts per task; AUC: median, and runs in which it rises.}
+\caption{All 27 agent-written training runs on RelBench learn from rows
+after $t$; the query AUC rises in only 5--6 of the 9 runs per task. AUC:
+median, and runs in which it rises.}
 \label{tab:relbench}
 \begin{tabular}{@{}lrrrrrrrr@{}}
 \toprule
@@ -386,11 +372,10 @@ event/ignore & 3{,}755 & 14{,}727 & 0.13--0.96 & 0.79 & 0.92 & 6 & 6 & 3 \\
 commercial coding agent each wrote three training scripts for three binary
 tasks (27 runs). \tool{} runs them unmodified through one command template,
 with the official label horizons (30 days for F1, 7 for Event).
-Table~\ref{tab:relbench} supports three conclusions. Every run is
-LEAK: the scripts train on the whole table they are given and never
+Every run is LEAK: the scripts train on the whole table they are given and never
 bound it by the label horizon. The metric would not have revealed this: the
 median AUC rises on every task, but not in 10 of the 27 runs, so the verdict
-rests on outputs and not on metric gains. The identity check finds no
+rests on the outputs. The identity check finds no
 recall; its UNCHECKABLE runs come from three scripts whose outputs
 differ between the two anonymizations (hashed or scaled ID features), and a
 comparison of original and anonymized identities alone would report them
@@ -406,8 +391,7 @@ label horizon; the agent check detects identity dependence, not pretraining
 as such; one base model wrote the RelBench corpus; the PITBench controls
 and mutation labels have one annotator, and the agent and ICL checks have no
 natural positives yet, so zero false alarms is an observation, not a bound;
-the lower-bound label probe fires only on events stamped exactly at $t$; the
-schema agent sends a profile with sample values to the model provider
+the schema agent sends a profile with sample values to the model provider
 (-{}-no-samples keeps them local).
 
 % ---------------------------------------------------------------------------
@@ -418,20 +402,19 @@ results~\cite{kaufman2011,kapoor2023}. Static detectors find leakage
 patterns in notebooks~\cite{yang2022}, and learned models classify
 code~\cite{peerj2025}; both judge code, whereas \tool{} judges outputs and
 therefore treats model training and context assembly like features.
-The verification is one-sided, as in the formulation of look-ahead
-freedom as temporal non-interference~\cite{fonseca2026}: a divergence is a
-finite witness of a violation, while agreement at finitely many probes
-leaves the program unverified; that formulation is static and covers one
-layer of backtesting code. Featuretools cutoff times~\cite{dfs} prevent row
-leakage when availability is given. \tool{} stamps values as well as rows.
+The verification is one-sided, as in look-ahead freedom as temporal
+non-interference~\cite{fonseca2026}, a static formulation for one layer of
+backtesting code. Featuretools cutoff times~\cite{dfs} prevent row leakage
+when availability is given; \tool{} stamps values as well as rows.
 
 % ---------------------------------------------------------------------------
 \section{Availability}
 
-\tool{}, its tests, the schemas and replay scripts for Olist, RelBench
-and the eight PITBench databases, the run logs,
-the 27 agent-written scripts with their replay inputs, and the skill file
-are available at \todo{GitHub / Zenodo URL} under \todo{license}.
+Demo (project page, workbench, live run, usage instructions):
+\url{https://jrzkaminski-strata-demo.static.hf.space}. Code, tests, the
+schemas and replay scripts for Olist, RelBench and PITBench, run logs, the
+27 agent-written scripts with replay inputs, and the skill file:
+\todo{GitHub / Zenodo URL}, \todo{license}.
 
 \bibliographystyle{IEEEtran}
 \bibliography{refs}
