@@ -9,6 +9,7 @@
 \usepackage{tikz}
 \usetikzlibrary{positioning,arrows.meta,fit,backgrounds}
 \usepackage[hidelinks]{hyperref}
+\urlstyle{same}
 
 \newcommand{\tool}{STRATA}
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
@@ -31,7 +32,7 @@
 We present \tool, a point-in-time checker for ML pipelines that coding
 agents write over timestamped relational data. The tool runs
 every layer of a pipeline (task, features, model, in-context examples,
-agent) on the data as it is and as it was at the prediction time; any
+agent) on the data as it is and as it was at the prediction time. Any
 difference in the layer's output is a LEAK witness that names the
 time, entity, column and channel. A database enters only through an
 availability schema, which \tool{} drafts from the raw files, with an
@@ -42,6 +43,7 @@ generated feature programs it finds 16 leaks that a row-cut oracle misses,
 and all 27 agent-written training runs on RelBench learn from rows after the
 prediction time.
 Demo: \url{https://jrzkaminski-strata-demo.static.hf.space}.
+Code: \url{https://github.com/PavelMarian/STRATA}.
 Video: \todo{video URL, e.g.\ \url{https://youtu.be/...}}
 \end{abstract}
 
@@ -71,7 +73,7 @@ When an agent writes the whole pipeline, a leak can sit in any of five
 layers: the task (which entities and labels exist at $t$), the
 features, the model (which training rows it learns from), the
 in-context (ICL) examples, and the agent itself (what it
-recalls about known entities instead of reading the data). A check of one
+recalls about known entities from outside the data). A check of one
 layer passes a pipeline that leaks in another: agent-written scripts that
 cut their features correctly still train on future labels
 (Section~\ref{sec:eval}). Agents also meet databases nobody has annotated,
@@ -79,15 +81,15 @@ so a checker tied to one schema leaves them without a gate.
 
 \tool{} closes this gap with one principle applied to every layer: a layer
 is PIT-correct at $t$ if its output on the full database $\Dfull$ equals its
-output on $\Dcut$, the database as it was at $t$. It contributes:
-(i)~a database-agnostic oracle: a database enters only through an
+output on $\Dcut$, the database as it was at $t$. It contributes three
+things. (i)~A database-agnostic oracle: a database enters only through an
 availability schema of a few lines per table, which strata init
-drafts from the raw files, optionally with an LLM agent, for review;
-(ii)~five black-box layer checks with a verdict vocabulary that keeps
-unknowns apart from passes and attaches a witness to every leak;
-(iii)~agent integration: a CLI with exit codes and JSON reports, a
-sandbox for code written by a model, and a skill file that a coding agent loads on
-its own.
+drafts from the raw files, optionally with an LLM agent, for review.
+(ii)~Five black-box layer checks with a verdict vocabulary that keeps
+unknowns apart from passes and attaches a witness to every leak.
+(iii)~Agent integration: a CLI with exit codes and JSON reports, a
+sandbox for code written by a model, and a skill file that a coding agent
+loads on its own.
 
 % ---------------------------------------------------------------------------
 \section{The \tool{} Tool}
@@ -117,8 +119,8 @@ self-available, tables without dates inherit time through a shared key, and
 text columns named like a status become unknown. Names and dates
 do not reveal which values are snapshots taken at the end of the data, so strata init
 -{}-llm adds a schema agent. An LLM (through OpenRouter) reads a profile of
-the files, the heuristic draft and optional documentation, and returns every
-decision with a reason in a fixed JSON schema; \tool{} checks each decision
+the files, the heuristic draft and optional documentation. It returns every
+decision with a reason in a fixed JSON schema. \tool{} checks each decision
 against the data (missing columns, unparsable or late row times, broken
 inheritance chains) and returns the findings for at most two revisions. The
 model never produces a verdict or code.
@@ -127,7 +129,7 @@ model never produces a verdict or code.
 exist and blanks values not yet filled. Some channels survive truncation,
 so the canary $\Dfull'$ keeps $\Dcut$ intact but rewrites everything $\Dcut$
 removes with marker values (shifted numbers, dates beyond the data horizon,
-a reserved category). The unknown probe perturbs only unknown columns; keys
+a reserved category). The unknown probe perturbs only unknown columns. Keys
 are never perturbed.
 
 \textbf{Layer checks} (Fig.~\ref{fig:arch}). The lower bound of the
@@ -137,19 +139,18 @@ loses them. Any pipeline function $f(db, ids, t)$, including a training
 routine that builds its own examples, is checked like features, and a
 feature leak is localized by cutting one channel at a time (rows of one
 table, or one late-filled column) until the output changes. The model and
-ICL checks replay a predictor at a query time inside the training history;
-a label counts as known at $t$ when its row time plus the label horizon $h$
-is at most $t$. The agent check needs two anonymizations, not
-one. Both preserve order and equality, so a model that learns only from the
-data cannot tell them from the original identities: real identities that
-change the output signal recall or an external lookup, while anonymizations
+ICL checks replay a predictor at a query time inside the training history.
+A label counts as known at $t$ when its row time plus the label horizon $h$
+is at most $t$. The agent check needs two anonymizations.
+Both preserve order and equality, so a model that learns only from the
+data cannot tell them from the original identities. Real identities that
+change the output signal recall or an external lookup. Anonymizations
 that disagree with each other reveal a dependence on how identities are
-spelled (hashed ID features) and yield UNCHECKABLE instead of a
-false alarm.
+spelled (hashed ID features) and yield UNCHECKABLE.
 
 \textbf{Verdicts.} The verification is one-sided: LEAK is a finite
 witness of a violation, CLEAN only says that none was observed at the
-times tested, and neither UNCHECKABLE nor ERROR counts as clean. Each
+times tested, and UNCHECKABLE and ERROR are failed checks. Each
 predictor is first replayed twice on identical input to detect
 nondeterminism.
 
@@ -160,7 +161,7 @@ Code under test runs in a forked child with a timeout, a memory limit and an
 environment stripped of API keys. A SKILL.md file says when to call
 which check, how to read a witness, that only a rerun may declare a leak
 fixed, and that CLEAN is not a proof. The checker is about 1{,}300 lines of
-Python on pandas with 38 tests; the examples for all ten databases differ
+Python on pandas with 38 tests. The examples for all ten databases differ
 only in schema files and command templates.
 
 % ---------------------------------------------------------------------------
@@ -177,10 +178,10 @@ verdict and its witnesses (time, product, both values, channel).}
 The demo is a browser workbench over recorded \tool{} runs on real data
 (Fig.~\ref{fig:demo}). A feature program written by a code model for Olist
 gets LEAK, localized to the reviews table, is repaired in place and rerun
-CLEAN; a program that reads order\_status gets UNCHECKABLE with the output
+CLEAN. A program that reads order\_status gets UNCHECKABLE with the output
 columns that depend on it. The schema viewer shows the drafted Olist schema
 with the LLM agent's reason per table. An agent-written
-RelBench~\cite{relbench} script leaks in the model check; a second script
+RelBench~\cite{relbench} script leaks in the model check. A second script
 gets UNCHECKABLE in the identity check because its two anonymizations
 disagree.
 A second page runs \tool{} itself in the browser on a sample of Olist: a
@@ -191,23 +192,21 @@ editable prompt, and the checks run on the result.
 \section{Evaluation}
 \label{sec:eval}
 
-The experiments answer four questions, each backed by one table: does
+The experiments answer four questions, each backed by one table. Does
 \tool{} transfer across databases without code changes and separate
-violations from harmless changes (Table~\ref{tab:pitbench}); is its verdict
+violations from harmless changes (Table~\ref{tab:pitbench})? Is its verdict
 more reliable than that of an oracle written for one database
-(Table~\ref{tab:olist}); can the schema be drafted without hand annotation
-(Table~\ref{tab:init}); and what does it find in training code written by
-agents (Table~\ref{tab:relbench}).
+(Table~\ref{tab:olist})? Can the schema be drafted without hand annotation
+(Table~\ref{tab:init})? What does it find in training code written by
+agents (Table~\ref{tab:relbench})?
 
 \begin{table*}[t]
 \centering\footnotesize
 \setlength{\tabcolsep}{4.5pt}
-\caption{One code base and one schema per database: \tool{} gets every
-control verdict and separates violating from harmless mutants on all eight
-PITBench databases, while each weaker detector fails on a different kind of
-leak. Controls: leaking programs detected and correct programs flagged.
-Mutants: behaviour-changing mutants, hand-labelled violations killed,
-harmless mutants flagged. Leak classes: R rows not cut at
+\caption{Controls and mutants on the eight PITBench databases, one code
+base and one schema per database. Controls: leaking programs detected and
+correct programs flagged. Mutants: behaviour-changing mutants, hand-labelled
+violations killed, harmless mutants flagged. Leak classes: R rows not cut at
 $t$, L late-filled value, S snapshot, A dump-time aggregate, B same-day
 boundary, E entity before it exists, N neighbour statistic.}
 \label{tab:pitbench}
@@ -244,18 +243,18 @@ on the domain, size or leak classes, and the localized channel is the one
 the control leaks through (rental.return\_date, product.list\_price). The
 schema, in turn, decides what can be seen. Declaring the snapshot columns
 unknown turns the 8 snapshot and aggregate controls into
-UNCHECKABLE and changes nothing else; a naive F1 schema that times
+UNCHECKABLE and changes nothing else. A naive F1 schema that times
 results at midnight lets the leak at the race-day boundary pass as
 CLEAN. A median control takes 2.6\,s.
 
 \textbf{Mutants.} Five operators (remove a time cut, move a window past
 $t$, widen the label horizon, swap </<=, remove a lower
-bound) produce 144 mutants of the reference pipelines; the 98 that change
+bound) produce 144 mutants of the reference pipelines. The 98 that change
 some output were labelled by hand as violations or not.
 select\_entities, get\_features and fit\_predict
 are checked like features, make\_label by the label check. In the
 code and in the output, a harmless mutant (a longer window into the past, a
-stricter cut) looks like a violation; only the comparison with the database
+stricter cut) looks like a violation. Only the comparison with the database
 at $t$ tells them apart, on every database (Table~\ref{tab:pitbench}). Most violations sit outside the feature code: the training
 routine fires in 32 kills and the label check in 19, and three kills need
 the probe of the lower bound.
@@ -263,42 +262,41 @@ the probe of the lower bound.
 \textbf{Baselines} (Table~\ref{tab:pitbench}). Each weaker detector fails
 on a different kind of leak, and the classes column shows which. Cutting
 rows at $t$, as cutoff times in feature frameworks do, cannot see a value
-filled in later or a snapshot, so it falls short exactly on the databases
-with classes L and S; adding late-filled dates and a canary, as an oracle
-for one database does, still misses every snapshot. The feature layer
+filled in later or a snapshot. It falls short on the databases with classes
+L and S. Adding late-filled dates and a canary, as an oracle for one
+database does, still misses every snapshot. The feature layer
 alone misses the violations in label windows and training routines.
 Treating any output change as a leak, as regression testing would, cannot
 tell a violation from a harmless change. A static rule that flags code naming a late column or never
 comparing with $t$, given the same schema, finds 22 leaking controls with 4
-false alarms but only 6 violating mutants with 9 false alarms: a mutated
-comparison still looks like a cut. The AutoML rule, a feature with AUC
+false alarms. On the mutants it finds 6 violations with 9 false alarms: a
+mutated comparison still looks like a cut. The AutoML rule, a feature with AUC
 above 0.85 (0.80), finds 4 (5) leaks and flags 3 of 9 correct programs:
 leaked features need not be predictive, and good features are.
 
 \textbf{Olist (features).} Corpus: the Olist e-commerce database and one
 task, whether a product is ordered in the 90 days after $t$. Two code models
 wrote 250 feature programs from a task description that never mentions
-leakage; 134 execute. The reference is a handwritten oracle for Olist alone
-that cuts rows by table time; both checkers ran with the same entities and
+leakage, and 134 execute. The reference is a handwritten oracle for Olist
+alone that cuts rows by table time. Both checkers ran with the same entities and
 three prediction times. Table~\ref{tab:olist} shows that the two agree on
 the oracle's leaks and part on its clean verdicts. The one leak \tool{}
 does not confirm is a program truncated by the model's output limit, which
 returns no frame. The programs the oracle wrongly passes filter orders by
 purchase time but compute delivery times from delivery dates (15) or the
-times of review answers (1) that were still in the future at $t$; a row
+times of review answers (1) that were still in the future at $t$. A row
 cut cannot see a value filled in later. Declared self-available in the
 schema, these columns produce ordinary witnesses, so the canary adds no
 further program. The UNCHECKABLE programs read
-order\_status, which Olist overwrites without history; no oracle
-can check them, and \tool{} says so instead of passing them.
+order\_status, which Olist overwrites without history. No oracle
+can check them, and \tool{} reports them as unverifiable.
 
 \begin{table}[t]
 \centering\footnotesize
 \setlength{\tabcolsep}{4pt}
-\caption{A CLEAN from an oracle written for one database is not
-reliable: \tool{} confirms the oracle's leaks, but half of the programs the
-oracle passes leak or cannot be checked. Rows: verdict of a handwritten
-row-cut oracle on 134 generated programs.}
+\caption{Verdicts of \tool{} on 134 generated Olist programs, by the
+verdict of a handwritten row-cut oracle (rows). Main channel: the table or
+column that carries the difference.}
 \label{tab:olist}
 \begin{tabular}{@{}lrrrrl@{}}
 \toprule
@@ -314,9 +312,9 @@ CLEAN (71) & 16 & 35 & 20 & 0 & delivery dates \\
 \centering\footnotesize
 \setlength{\tabcolsep}{4pt}
 \caption{Drafted schemas on the eight PITBench databases against the
-hand-made maps, and the 34 controls run on the drafts. Names and dates
-suffice except for snapshots, which the LLM agent finds. Caught and flagged
-mean LEAK or UNCHECKABLE.}
+hand-made maps, and the 34 controls run on the drafts. Of: the count in the
+maps or the number of controls. Caught and flagged mean LEAK or
+UNCHECKABLE.}
 \label{tab:init}
 \begin{tabular}{@{}lrrr@{}}
 \toprule
@@ -342,20 +340,21 @@ drafts two F1 leaks (race-day boundary, career totals) pass as
 CLEAN, on the agent's drafts none does. The heuristics take a wrong date as the row time
 (the shipped date of Northwind orders, the date from which the PKDD'99
 district statistics are known), and the missing rows look like a leak. The
-agent's flags are cautious or deliberate: it declares two mutable columns
+agent's flags are cautious or deliberate. It declares two mutable columns
 unknown (Northwind freight, Sakila payment amount), which gives
-UNCHECKABLE, and it times Olist reviews by the customer's answer,
-not by the survey date, since the score does not exist before the answer.
+UNCHECKABLE. It times Olist reviews by the customer's answer, where the map
+uses the survey date, since the score does not exist before the answer.
 It kept that decision with a reason when the data check queried it and
 listed it as a question for the data owner. A schema takes 1--3 calls, about
-a minute per database; two runs differ in one decision.
+a minute per database. Two runs differ in one decision.
 
 \begin{table}[t]
 \centering\footnotesize
 \setlength{\tabcolsep}{2.6pt}
-\caption{All 27 agent-written training runs on RelBench learn from rows
-after $t$; the query AUC rises in only 5--6 of the 9 runs per task. AUC:
-median, and runs in which it rises.}
+\caption{RelBench, 9 agent-written scripts per task. Rows: training rows
+with labels known by $t$, and later rows. $\max|\Delta s|$: range over
+scripts of the largest change in a prediction. AUC: median at $t$ and with
+the later rows, and runs in which it rises. Identity: agent-check verdicts.}
 \label{tab:relbench}
 \begin{tabular}{@{}lrrrrrrrr@{}}
 \toprule
@@ -378,7 +377,7 @@ Every run is LEAK: the scripts train on the whole table they are given and never
 bound it by the label horizon. The metric would not have revealed this: the
 median AUC rises on every task, but not in 10 of the 27 runs, so the verdict
 rests on the outputs. The identity check finds no
-recall; its UNCHECKABLE runs come from three scripts whose outputs
+recall. Its UNCHECKABLE runs come from three scripts whose outputs
 differ between the two anonymizations (hashed or scaled ID features), and a
 comparison of original and anonymized identities alone would report them
 as recall.
@@ -387,14 +386,14 @@ as recall.
 median 6.5\,s, a model check of an agent script 5--6\,s.
 
 \textbf{Limitations.} A schema is a claim about the data, and a verdict is
-only as good as its schema; CLEAN is scoped to the tested times
-and entities; the model and ICL checks need a time column and a declared
-label horizon; the agent check detects identity dependence, not pretraining
-as such; one base model wrote the RelBench corpus; the PITBench controls
-and mutation labels have one annotator, and the agent and ICL checks have no
-natural positives yet, so zero false alarms is an observation, not a bound;
-the schema agent sends a profile with sample values to the model provider
-(-{}-no-samples keeps them local).
+only as good as its schema. CLEAN is scoped to the tested times and
+entities. The model and ICL checks need a time column and a declared label
+horizon. The agent check detects identity dependence, and pretraining as
+such stays outside its reach. One base model wrote the RelBench corpus. The
+PITBench controls and mutation labels have one annotator, and the agent and
+ICL checks have no natural positives yet, so zero false alarms is an
+observation without a bound. The schema agent sends a profile with sample
+values to the model provider (-{}-no-samples keeps them local).
 
 % ---------------------------------------------------------------------------
 \section{Related Work}
@@ -402,12 +401,12 @@ the schema agent sends a profile with sample values to the model provider
 Temporal leakage is a recurring source of irreproducible ML
 results~\cite{kaufman2011,kapoor2023}. Static detectors find leakage
 patterns in notebooks~\cite{yang2022}, and learned models classify
-code~\cite{peerj2025}; both judge code, whereas \tool{} judges outputs and
+code~\cite{peerj2025}. Both judge code, whereas \tool{} judges outputs and
 therefore treats model training and context assembly like features.
 The verification is one-sided, as in look-ahead freedom as temporal
 non-interference~\cite{fonseca2026}, a static formulation for one layer of
 backtesting code. Featuretools cutoff times~\cite{dfs} prevent row leakage
-when availability is given; \tool{} stamps values as well as rows.
+when availability is given. \tool{} stamps values as well as rows.
 
 % ---------------------------------------------------------------------------
 \section{Availability}

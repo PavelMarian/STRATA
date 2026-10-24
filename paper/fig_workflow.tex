@@ -19,9 +19,9 @@
 \node[box, below=of raw] (code) {pipeline code\\task $\cdot$ features $\cdot$ model\\ICL $\cdot$ agent};
 
 % --- column 2: availability schema
-\node[box, right=of raw, yshift=2mm] (init) {\texttt{strata init}: name and date\\heuristics $+$ optional LLM agent};
+\node[box, right=of raw, yshift=2mm] (init) {strata init: name and date\\heuristics $+$ optional LLM agent};
 \node[box, below=of init] (evid) {data check: every decision\\tested against the files};
-\node[box, below=of evid] (schema) {\texttt{schema.json}: row time,\\late values, snapshots, unknown};
+\node[box, below=of evid] (schema) {schema.json: row time,\\late values, snapshots, unknown};
 \node[box, below=of schema] (review) {human review, once};
 
 % --- column 3: database states
@@ -43,7 +43,7 @@
 \node[verdict, below=of err, fill=yellow!14] (unch) {UNCHECKABLE\\nondeterministic, unknown column\\read, anonymizations disagree};
 \node[verdict, below=of unch, fill=red!9] (leak) {LEAK $+$ witness\\time, entity, column, channel};
 \node[verdict, below=of leak, fill=green!12] (clean) {CLEAN\\at the tested times};
-\node[verdict, below=of clean, fill=black!6, yshift=-1mm] (agent) {coding agent\\exit code 0/1/2/3, JSON report,\\\texttt{SKILL.md}};
+\node[verdict, below=of clean, fill=black!6, yshift=-1mm] (agent) {coding agent\\exit code 0/1/2/3, JSON report,\\SKILL.md};
 
 % --- column frames and headings
 \begin{scope}[on background layer]
