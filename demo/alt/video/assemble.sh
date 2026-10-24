@@ -7,7 +7,7 @@ set -euo pipefail
 REC="${1:?rec dir (frames/scene_<id>/frames.txt)}"; VOICE="${2:?voice dir (scene_<id>.wav)}"; OUT="${3:?out.mp4}"
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 : > "$TMP/clips.txt"
-for d in $(ls -d "$REC"/frames/scene_* | sort -t_ -k2 -n); do
+for d in $(ls -d "$REC"/frames/scene_* | awk -F"scene_" '{print $NF" "$0}' | sort -n | cut -d" " -f2-); do
   id="${d##*_}"; wav="$VOICE/scene_${id}.wav"
   [ -f "$wav" ] || { echo "missing $wav" >&2; exit 1; }
   ffmpeg -y -v error -f concat -safe 0 -i "$d/frames.txt" -i "$wav" \
