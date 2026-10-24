@@ -1,0 +1,76 @@
+% STRATA workflow, drawn with TikZ so that the terms match the text.
+% Input -> availability schema -> database states -> layer checks -> verdicts -> back to the agent.
+% Needs \usetikzlibrary{positioning,arrows.meta,fit,backgrounds}.
+\begin{tikzpicture}[
+  font=\scriptsize,
+  every node/.append style={execute at begin node={\hyphenpenalty=10000 \exhyphenpenalty=10000 }},
+  box/.style={draw=black!55, rounded corners=2pt, fill=white, align=center, inner sep=2.5pt, minimum height=5mm, text width=2.95cm},
+  col/.style={draw=black!40, rounded corners=3pt, fill=black!3, inner xsep=4pt, inner ysep=4pt},
+  head/.style={font=\scriptsize\bfseries, anchor=south west, inner sep=1pt},
+  state/.style={box, fill=blue!4},
+  check/.style={box, fill=green!6},
+  verdict/.style={box, text width=2.55cm},
+  arr/.style={-{Latex[length=1.6mm]}, draw=black!65, line width=.5pt},
+  back/.style={-{Latex[length=1.6mm]}, draw=orange!80!black, line width=.55pt, dashed},
+  node distance=1.5mm and 5mm]
+
+% --- column 1: input
+\node[box] (raw) {raw database\\CSV / Parquet};
+\node[box, below=of raw] (code) {pipeline code\\task $\cdot$ features $\cdot$ model\\ICL $\cdot$ agent};
+
+% --- column 2: availability schema
+\node[box, right=of raw, yshift=2mm] (init) {\texttt{strata init}: name and date\\heuristics $+$ optional LLM agent};
+\node[box, below=of init] (evid) {data check: every decision\\tested against the files};
+\node[box, below=of evid] (schema) {\texttt{schema.json}: row time,\\late values, snapshots, unknown};
+\node[box, below=of schema] (review) {human review, once};
+
+% --- column 3: database states
+\node[state, right=of init, yshift=2mm] (full) {$D$: the full database};
+\node[state, below=of full] (cut) {$D_{\le t}$: as it was at $t$};
+\node[state, below=of cut] (can) {$D'$: canary, the future\\rewritten with marker values};
+\node[state, below=of can] (unk) {probe of the unknown columns};
+\node[state, below=of unk] (hist) {history with labels known\\by $t$ vs.\ with later rows};
+\node[state, below=of hist] (anon) {two order-preserving\\anonymizations};
+
+% --- column 4: layer checks
+\node[check, right=of full, yshift=-1mm] (ctask) {task: entity creation vs.\ row\\time; labels on $D$ vs.\ $D_{\le t+h}$};
+\node[check, below=of ctask] (cfeat) {features: run on $D$, $D_{\le t}$, $D'$\\and the probe; localize the channel};
+\node[check, below=of cfeat] (cmodel) {model / ICL: replay the predictor\\at $t$ inside the training history};
+\node[check, below=of cmodel] (cagent) {agent: original vs.\\anonymized identities};
+
+% --- column 5: verdicts
+\node[verdict, right=of ctask, yshift=3mm, fill=red!6] (err) {ERROR\\crash, invalid output};
+\node[verdict, below=of err, fill=yellow!14] (unch) {UNCHECKABLE\\nondeterministic, unknown column\\read, anonymizations disagree};
+\node[verdict, below=of unch, fill=red!9] (leak) {LEAK $+$ witness\\time, entity, column, channel};
+\node[verdict, below=of leak, fill=green!12] (clean) {CLEAN\\at the tested times};
+\node[verdict, below=of clean, fill=black!6, yshift=-1mm] (agent) {coding agent\\exit code 0/1/2/3, JSON report,\\\texttt{SKILL.md}};
+
+% --- column frames and headings
+\begin{scope}[on background layer]
+  \node[col, fit=(raw)(code)] (c1) {};
+  \node[col, fit=(init)(review)] (c2) {};
+  \node[col, fit=(full)(anon)] (c3) {};
+  \node[col, fit=(ctask)(cagent)] (c4) {};
+  \node[col, fit=(err)(agent)] (c5) {};
+\end{scope}
+\node[head] at (c1.north west) {Input};
+\node[head] at (c2.north west) {Availability schema};
+\node[head] at (c3.north west) {Database states};
+\node[head] at (c4.north west) {Layer checks, in a sandbox};
+\node[head] at (c5.north west) {Verdict};
+
+% --- forward arrows
+\coordinate (bot) at (current bounding box.south);
+\draw[arr] (raw.east) -- (init.west);
+\draw[arr] (init) -- (evid);
+\draw[arr] (evid) -- (schema);
+\draw[arr] (schema) -- (review);
+\draw[arr] (schema.east) -- (cut.west);
+\draw[arr] (c3.east) -- (c4.west);
+\draw[arr] (c4.east) -- (c5.west);
+\draw[arr] (code.south) |- ([yshift=-3mm]bot -| c4.south) -- (c4.south) node[pos=.5, below, font=\tiny] {code under test, run unmodified};
+
+% --- feedback from the agent
+\draw[back] (c5.south) -- ([yshift=-7mm]bot -| c5.south) -| (code.west) node[pos=.5, below, font=\tiny, orange!80!black] {repaired pipeline};
+\draw[back] ([xshift=6mm]c5.south) -- ([yshift=-11mm]bot -| c5.south) -| (review.south) node[pos=.5, below, font=\tiny, orange!80!black] {refined schema};
+\end{tikzpicture}
