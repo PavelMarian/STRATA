@@ -82,7 +82,9 @@ details { margin-top: 8px } summary { cursor: pointer; color: var(--muted); font
   <select id="model" style="max-width:300px"><option value="anthropic/claude-opus-5.5">anthropic/claude-opus-5.5</option></select>
   <input id="modelFree" placeholder="or any OpenRouter model id" style="width:220px">
   <div class="spacer"></div>
-  <span class="links"><a href="about.html">What is STRATA?</a></span>
+  <a href="about.html" class="ghost" style="border:1px solid var(--line);border-radius:8px;padding:6px 12px;color:var(--ink)">What is STRATA?</a>
+  <button id="btnSkill">Download skill</button>
+  <span class="links"><a href="#" id="lnkRepo">GitHub</a><a href="#" id="lnkPaper">Paper</a></span>
 </header>
 <div class="status" id="status">Loading the Python runtime…</div>
 
@@ -144,6 +146,8 @@ const DATA_DIR = "/data/olist";
 let py = null, tables = null, schemaMsgs = null;
 
 $("#modeSwitch").onchange = () => location.href = "index.html";
+const dl = () => { try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([SKILL], {type: "text/markdown"})); a.download = "SKILL.md"; document.body.appendChild(a); a.click(); a.remove(); toast("SKILL.md downloaded") } catch (e) { toast("Download is blocked here") } };
+$("#btnSkill").onclick = dl;
 // ---------- tabs ----------
 $$(".tabs button").forEach(b => b.onclick = () => { $$(".tabs button").forEach(x => x.setAttribute("aria-selected", String(x === b))); $$("main.work").forEach(m => m.classList.toggle("hidden", m.id !== "tab-" + b.dataset.tab)); });
 
