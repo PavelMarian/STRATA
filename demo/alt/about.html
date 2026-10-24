@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
 <style>
-/* Project page: plain questions and answers, one big button to the demo. */
+/* Project page. The workbench loads <main> of this file into its "What is STRATA?" sheet,
+   so the text lives here once. */
 :root { --bg: #f6f7f9; --panel: #ffffff; --ink: #1b2330; --muted: #5d6878; --line: #d9dee6; --accent: #2b5a9e; --accent-ink: #fff;
   --leak: #c2372b; --clean: #1f7a4a; --unk: #9a6400; --font: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace; --display: "Bricolage Grotesque", var(--font) }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0f141b; --panel: #182029; --ink: #e4e9f0; --muted: #8b98a9; --line: #2a3542; --accent: #5b9cf5; --accent-ink: #0b1220; --leak: #ff6b5e; --clean: #4cd98a; --unk: #f3c46b } }
@@ -16,36 +17,38 @@
 body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--font) }
 main { max-width: 860px; margin: 0 auto; padding: 48px 16px 80px }
 h1 { font: 800 clamp(34px, 6vw, 56px)/1.05 var(--display); margin: 0 0 12px; letter-spacing: -.01em }
-.lead { font-size: 20px; color: var(--muted); max-width: 40em; margin: 0 0 28px }
-.cta { display: inline-block; background: var(--accent); color: var(--accent-ink); font: 700 22px var(--display); padding: 16px 30px; border-radius: 12px; text-decoration: none; box-shadow: 0 6px 24px rgba(43,90,158,.25) }
-.cta:hover { filter: brightness(1.08) }
-.cta small { display: block; font: 400 13px var(--font); opacity: .85 }
+.lead { font-size: 20px; color: var(--muted); max-width: 40em; margin: 0 0 20px }
 .authors { margin: 0 0 28px; font-size: 16px; font-weight: 500 }
 .authors span { color: var(--muted); font-weight: 400 }
-.links { margin: 18px 0 40px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 15px }
+.cta { display: inline-block; background: var(--accent); color: var(--accent-ink); font: 700 22px var(--display); padding: 16px 30px; border-radius: 12px; text-decoration: none; box-shadow: 0 6px 24px rgba(43,90,158,.25); border: 0; cursor: pointer }
+.cta:hover { filter: brightness(1.08) }
+.cta small { display: block; font: 400 13px var(--font); opacity: .85 }
+.links { margin: 18px 0 40px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 15px; align-items: center }
 .links a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent }
 .links a:hover { border-color: var(--accent) }
-figure { margin: 0 0 40px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px }
+.links button { font: inherit; color: var(--accent); background: none; border: 1px solid var(--accent); border-radius: 8px; padding: 4px 12px; cursor: pointer }
+figure { margin: 0 0 40px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px }
 figure img { width: 100%; height: auto; display: block; border-radius: 6px }
 figcaption { color: var(--muted); font-size: 14px; margin-top: 8px }
-h2 { font: 700 24px var(--display); margin: 36px 0 8px }
+h2 { font: 700 22px var(--display); margin: 36px 0 8px }
 p, li { max-width: 68ch }
-.qa h2 { font-size: 21px; margin-top: 30px }
 code { font-family: var(--mono); font-size: .92em; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px }
 pre { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; overflow: auto; font: 13.5px/1.5 var(--mono) }
 pre code { border: 0; padding: 0; background: none }
+.rule { font-family: var(--mono); font-size: 17px; padding: 10px 16px; border-left: 3px solid var(--accent); background: var(--panel); border-radius: 0 8px 8px 0; margin: 12px 0 }
 .verd { font-weight: 600; font-family: var(--mono) }
 .v-leak { color: var(--leak) } .v-clean { color: var(--clean) } .v-unk { color: var(--unk) }
 table { border-collapse: collapse; width: 100%; font-size: 15px; margin: 8px 0 }
-th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); vertical-align: top }
 th { color: var(--muted); font-weight: 500 }
+td b { font-family: var(--mono); font-weight: 500; color: var(--accent) }
 .foot { color: var(--muted); font-size: 14px; margin-top: 48px; border-top: 1px solid var(--line); padding-top: 16px }
 </style>
 </head>
 <body>
 <main>
   <h1>Your ML pipeline may be peeking at the future. STRATA shows you where.</h1>
-  <p class="lead">A checker for pipelines over time-stamped relational data, made for code that coding agents write. It runs your code on the data as it is and as it was at prediction time, and tells you where the two disagree.</p>
+  <p class="lead">A checker for pipelines over time-stamped relational data, made for code that coding agents write. It runs your code on the data as it is and on the data as it was at prediction time, and tells you where the two disagree.</p>
   <p class="authors">Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky<br><span>AI Institute, ITMO University</span></p>
   <a class="cta" href="index.html">Open the demo <small>a workbench with recorded runs on real data, runs in the browser</small></a>
   <div class="links">
@@ -53,60 +56,63 @@ th { color: var(--muted); font-weight: 500 }
     <a href="#" id="paper">Paper (ICSE 2027 tool demo)</a>
     <a href="#" id="video">Video (3 min)</a>
     <a href="https://github.com/PavelMarian/PITBench">PITBench, the test databases</a>
-    <a href="index.html?modal=about">Download the agent skill</a>
+    <button type="button" data-skill>Download SKILL.md</button>
   </div>
 
   <figure><img src="strata.png" alt="STRATA workflow: raw files to availability schema, database states, layer checks in a sandbox, verdict back to the coding agent"><figcaption>The schema is drafted from the raw files and confirmed by a person. The database states derived from it feed the layer checks, which run the code under test in a sandbox and compare outputs. The verdict sends the coding agent back to repair the pipeline or refine the schema.</figcaption></figure>
 
-  <div class="qa">
   <h2>What is a point-in-time leak?</h2>
-  <p>You build a model to predict what happens to a customer, a product or a driver after a date <i>t</i>. Every number the model sees for that prediction must have been known at <i>t</i>. A review written a week later, a delivery date filled in after the fact, an order status overwritten at the end of the data, a training row whose outcome came after <i>t</i>: each of these makes the offline score look better than the model will ever be in production.</p>
+  <p>You build a model to predict what happens to a customer, a product or a driver after a date <i>t</i>. Every number the model sees for that prediction must have been known at <i>t</i>. A review written a week later, a delivery date filled in after the fact, an order status overwritten at the end of the data, a training row whose outcome came after <i>t</i>: each of these inflates the offline score, and the model will never reach that score in production.</p>
 
-  <h2>Why is this a problem now?</h2>
-  <p>Coding agents write whole pipelines over relational databases, often ones nobody has annotated. The code runs, the tests pass and the metric is high. In our corpus, every one of 27 agent-written training scripts on RelBench learns from rows after the prediction time. The metric alone would have missed it: the AUC rose in 17 of the 27 runs.</p>
+  <h2>Why coding agents make it worse</h2>
+  <p>An agent writes the whole pipeline, often over a database nobody has annotated. The code runs, the tests pass and the metric is high. The leak can sit in any of five places, and a check of one place passes a pipeline that leaks in another. In our corpus, agent-written scripts that cut their features correctly still trained on outcomes from the future.</p>
 
-  <h2>What does STRATA do about it?</h2>
-  <p>It never reads the code. For each layer of the pipeline it runs the code twice, on the full database and on the database as it was at <i>t</i>, and compares the outputs.</p>
-  <pre><code>output on D  =  output on D as of t</code></pre>
-  <p>A difference is a <span class="verd v-leak">LEAK</span> with a witness: the time, the entity, the column and the channel that carried the future. No difference at the tested times is <span class="verd v-clean">CLEAN</span>. If the output depends on a column whose availability nobody knows, the answer is <span class="verd v-unk">UNCHECKABLE</span>.</p>
-
-  <h2>Which layers?</h2>
+  <h2>Where the future gets in</h2>
   <table>
     <tr><th>Layer</th><th>What can go wrong</th><th>Command</th></tr>
-    <tr><td>task</td><td>rows for entities that do not exist yet; labels used before they are complete</td><td><code>strata check task</code></td></tr>
-    <tr><td>features</td><td>rows created after <i>t</i>; dates filled in later; values overwritten at the end of the data</td><td><code>strata check features</code></td></tr>
-    <tr><td>model</td><td>training rows whose outcome was not known at <i>t</i></td><td><code>strata check model</code></td></tr>
-    <tr><td>in-context</td><td>few-shot examples for an LLM taken from after <i>t</i></td><td><code>strata check icl</code></td></tr>
-    <tr><td>agent</td><td>a model that knows an entity from outside the data</td><td><code>strata check agent</code></td></tr>
+    <tr><td><b>task</b></td><td>rows for entities that do not exist yet; labels used before they are complete</td><td><code>strata check task</code></td></tr>
+    <tr><td><b>features</b></td><td>rows created after <i>t</i>; dates filled in later; values overwritten at the end of the data</td><td><code>strata check features</code></td></tr>
+    <tr><td><b>model</b></td><td>training rows whose outcome was unknown at <i>t</i></td><td><code>strata check model</code></td></tr>
+    <tr><td><b>in-context</b></td><td>few-shot examples for an LLM taken from after <i>t</i></td><td><code>strata check icl</code></td></tr>
+    <tr><td><b>agent</b></td><td>a model that knows an entity from outside the data</td><td><code>strata check agent</code></td></tr>
   </table>
 
-  <h2>What does it need from me?</h2>
-  <p>One short file per database, the availability schema: for each table, when a row appears and which values arrive later. <code>strata init</code> drafts it from the raw CSV or Parquet files; with <code>--llm</code> an LLM agent proposes each decision with a reason, STRATA checks every decision against the data, and the open questions go to the person who knows the data. You review the draft once.</p>
+  <h2>One rule for all five</h2>
+  <div class="rule">output on D &nbsp;=&nbsp; output on D as of <i>t</i></div>
+  <p>STRATA never reads the code. For each layer it runs the code twice, on the full database and on the database as it was at <i>t</i>: rows that did not exist yet are removed, values filled in later are blanked. Then it compares the outputs.</p>
+  <p>A difference is a <span class="verd v-leak">LEAK</span> with a witness: the time, the entity, the column and the channel that carried the future. No difference at the tested times is <span class="verd v-clean">CLEAN</span>, and the verdict is scoped to those times. If the output depends on a column whose availability nobody knows, the verdict is <span class="verd v-unk">UNCHECKABLE</span>.</p>
+
+  <h2>What it needs from you</h2>
+  <p>One short file per database, the availability schema: for each table, when a row appears and which values arrive later. <code>strata init</code> drafts it from the raw CSV or Parquet files. With <code>--llm</code>, an LLM agent proposes each decision with a reason, STRATA checks every decision against the data, and the open questions go to the person who knows the data. You review the draft once.</p>
   <pre><code>pip install -e .
 strata init --data path/to/csvs --out schema.json
 strata check features --schema schema.json --program feats.py:get_features --entity product</code></pre>
 
-  <h2>How does a coding agent use it?</h2>
-  <p>Exit codes 0, 1, 2, 3 for CLEAN, LEAK, UNCHECKABLE, ERROR and a JSON report make every check a gate. The agent loads <code>SKILL.md</code>, which says which check to call for which layer, how to read a witness, that only a rerun may declare a leak fixed, and that CLEAN is not a proof. Code under test runs in a child process with a timeout, a memory limit and no API keys in the environment.</p>
+  <h2>How a coding agent uses it</h2>
+  <p>Exit codes 0, 1, 2, 3 for CLEAN, LEAK, UNCHECKABLE, ERROR and a JSON report make every check a gate. The agent loads <code>SKILL.md</code>, which says which check to call for which layer, how to read a witness, and that only a rerun may declare a leak fixed. Code under test runs in a child process with a timeout, a memory limit and no API keys in the environment.</p>
+  <p><button class="cta" type="button" data-skill style="font-size:18px;padding:12px 22px">Download SKILL.md</button></p>
 
   <h2>Does it work?</h2>
+  <p>STRATA was tested on eight relational databases with known answers (PITBench), on feature programs written by code models, and on training scripts written by a coding agent.</p>
   <table>
-    <tr><th>Experiment</th><th>Result</th></tr>
-    <tr><td>8 benchmark databases (PITBench), 34 control programs</td><td>34 of 34 verdicts as expected</td></tr>
-    <tr><td>98 code changes to the reference pipelines, labelled by hand</td><td>43 of 43 leaking changes caught, 0 of 55 harmless flagged</td></tr>
-    <tr><td>Weaker detectors on the same programs</td><td>cutting rows at <i>t</i>: 11 of 25 leaks; with late dates and a canary: 16 of 25</td></tr>
-    <tr><td>Olist, 134 feature programs written by code models</td><td>confirms 62 of 63 oracle leaks and finds 16 the oracle passed</td></tr>
-    <tr><td>RelBench, 27 agent-written training runs</td><td>27 of 27 learn from rows after <i>t</i></td></tr>
-    <tr><td>Schema drafting on the 8 databases</td><td>rules alone catch 5 of 50 snapshot columns; the LLM agent catches 50 of 50</td></tr>
+    <tr><th>What was tested</th><th>What STRATA found</th></tr>
+    <tr><td>Eight databases, 98 hand-labelled changes to a reference pipeline</td><td>all 43 leaking changes caught, none of the 55 harmless ones flagged</td></tr>
+    <tr><td>The usual shortcut: cut the rows at <i>t</i></td><td>finds fewer than half of the leaking programs, since it cannot see a value filled in later or a status overwritten at the end of the data</td></tr>
+    <tr><td>Olist, 134 feature programs written by code models</td><td>16 leaks that a hand-written checker for Olist had passed, all through delivery dates filled in after <i>t</i></td></tr>
+    <tr><td>RelBench, 27 training scripts written by a coding agent</td><td>all 27 learn from rows after <i>t</i>, and in 10 of them the metric did not even rise</td></tr>
   </table>
+  <p>Names and dates in the raw files are enough to draft row times and late-filled dates. Columns overwritten at the end of the data need the LLM agent: the rules alone found 5 of 50 of them, the agent found all 50.</p>
 
-  <h2>What came before?</h2>
-  <p>PITFALL studied point-in-time leakage in generated feature code on one database with a handwritten oracle. PITBench brought eight databases to one contract: an availability map, control programs with known verdicts and a reference pipeline each. STRATA is the checker that works on any of them, and on a database it has never seen, from a schema alone.</p>
-
-  </div>
+  <h2>What came before</h2>
+  <p>PITFALL studied point-in-time leakage in generated feature code on one database with a handwritten oracle. PITBench brought eight databases to one contract: an availability map, control programs with known verdicts and a reference pipeline each. STRATA is the checker that works on all of them, and on a database it has never seen, from a schema alone.</p>
 
   <p style="margin-top:40px"><a class="cta" href="index.html">Open the demo</a></p>
   <p class="foot">Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky. AI Institute, ITMO University.<br>STRATA 0.1.0, Python and pandas, 38 tests. ICSE 2027 Tool Demonstration and Data Showcase.</p>
 </main>
+<script src="data.js"></script>
+<script>
+const dl = () => { try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([SKILL], {type: "text/markdown"})); a.download = "SKILL.md"; document.body.appendChild(a); a.click(); a.remove() } catch (e) { location.href = "../../SKILL.md" } };
+document.querySelectorAll("[data-skill]").forEach(b => b.onclick = dl);
+</script>
 </body>
 </html>

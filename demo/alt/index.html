@@ -106,24 +106,26 @@ code, pre, .mono { font-family: var(--mono) }
 .sheet-body h3 { font: 700 17px var(--display); margin: 22px 0 8px }
 .sheet-body h3:first-child { margin-top: 0 }
 .sheet-body p { max-width: 70ch }
-.places { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 }
-.places div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--panel2) }
-.places b { font-family: var(--mono); color: var(--accent) }
-.rule { font-family: var(--mono); font-size: 16px; padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--panel2); border-radius: 0 8px 8px 0; margin: 10px 0 }
-.stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 10px 0 }
-.stats b { display: block; font: 700 28px var(--display) }
-.stats span { color: var(--muted); font-size: 13px }
-.pb { border-collapse: collapse; font-size: 12.5px; width: 100% }
-.pb th, .pb td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right }
-.pb th:first-child, .pb td:first-child, .pb td:nth-child(2) { text-align: left }
-.pb th { color: var(--muted); font-weight: 500 }
-.pb .good { color: var(--clean) } .pb .bad { color: var(--leak) }
-.flow { width: 100%; height: auto }
-.flow text { font-family: var(--font); font-size: 12px; fill: var(--ink) }
-.flow .small { font-size: 10.5px; fill: var(--muted) }
-.flow rect { fill: var(--panel2); stroke: var(--line) }
-.flow .hot rect { stroke: var(--accent) }
-.flow path { stroke: var(--muted); fill: none; stroke-width: 1.4; marker-end: url(#arr) }
+/* the project page inside the sheet */
+.sheet-body.about h1 { font: 800 26px/1.15 var(--display); margin: 0 0 8px }
+.sheet-body.about .lead { font-size: 16px; color: var(--muted); margin: 0 0 10px }
+.sheet-body.about .authors { font-size: 14px; margin: 0 0 14px } .sheet-body.about .authors span { color: var(--muted) }
+.sheet-body.about .cta, .sheet-body.about p:has(> a.cta) { display: none }
+.sheet-body.about .links { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; margin: 0 0 18px; align-items: center }
+.sheet-body.about .links button { font: inherit; color: var(--accent); background: none; border: 1px solid var(--accent); border-radius: 8px; padding: 3px 10px }
+.sheet-body.about figure { margin: 0 0 18px; background: #fff; border-radius: 10px; padding: 8px }
+.sheet-body.about figure img { width: 100%; height: auto; display: block; border-radius: 6px }
+.sheet-body.about figcaption { color: var(--muted); font-size: 12.5px; margin-top: 6px }
+.sheet-body.about h2 { font: 700 17px var(--display); margin: 20px 0 6px }
+.sheet-body.about p { margin: 6px 0 }
+.sheet-body.about pre { background: var(--bg); border-radius: 8px; padding: 10px 12px; overflow: auto; font: 12.5px/1.5 var(--mono) }
+.sheet-body.about code { font-family: var(--mono); font-size: .92em }
+.sheet-body.about .rule { font-family: var(--mono); font-size: 15px; padding: 8px 14px; border-left: 3px solid var(--accent); background: var(--panel2); border-radius: 0 8px 8px 0; margin: 8px 0 }
+.sheet-body.about .verd { font-weight: 600; font-family: var(--mono) } .sheet-body.about .v-leak { color: var(--leak) } .sheet-body.about .v-clean { color: var(--clean) } .sheet-body.about .v-unk { color: var(--unk) }
+.sheet-body.about table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 6px 0 }
+.sheet-body.about th, .sheet-body.about td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
+.sheet-body.about th { color: var(--muted); font-weight: 500 } .sheet-body.about td b { font-family: var(--mono); font-weight: 500; color: var(--accent) }
+.sheet-body.about .foot { color: var(--muted); font-size: 12.5px; margin-top: 20px; border-top: 1px solid var(--line); padding-top: 10px }
 
 /* schema viewer */
 .schema-wrap { position: relative }
@@ -177,42 +179,10 @@ code, pre, .mono { font-family: var(--mono) }
   </aside>
 </main>
 
-<!-- What is STRATA? -->
+<!-- What is STRATA? : the project page (about.html) loaded into a sheet -->
 <div class="modal" id="about"><div class="sheet">
-  <div class="sheet-head"><h2>What is STRATA?</h2><span class="spacer" style="flex:1"></span><button class="ghost" data-close>Close</button></div>
-  <div class="sheet-body">
-    <h3>The problem</h3>
-    <p>Coding agents now write whole ML pipelines over relational data with timestamps. The code runs, the tests pass, the score looks good. A model built to predict what happens after a date <i>t</i> can still use facts that only appeared after <i>t</i>. The offline score is inflated, and nothing in the code or the metric shows why. This is a point-in-time (PIT) leak.</p>
-    <p>The future can get in at five places, and a check of one place passes a pipeline that leaks in another:</p>
-    <div class="places">
-      <div><b>task</b> rows for entities that do not exist yet at <i>t</i>; labels used before they are complete</div>
-      <div><b>features</b> rows created after <i>t</i>; dates filled in later; values overwritten at the end of the data</div>
-      <div><b>model</b> training rows whose outcome was not known at <i>t</i></div>
-      <div><b>in-context</b> few-shot examples for an LLM taken from after <i>t</i></div>
-      <div><b>agent</b> a model that knows an entity from outside the data</div>
-    </div>
-    <h3>One rule for all five</h3>
-    <div class="rule">output on D &nbsp;=&nbsp; output on D as of <i>t</i></div>
-    <p>STRATA never reads the code. It runs each layer on the full database and on the database as it was at <i>t</i> (rows that did not exist yet removed, values filled in later blanked) and compares the outputs. A difference is a LEAK with a witness: the time, the entity, the column and the channel that carried the future. No difference at the tested times is CLEAN. If the output depends on a column whose availability nobody knows, the verdict is UNCHECKABLE.</p>
-    <h3>How it is built</h3>
-    <svg class="flow" viewBox="0 0 1000 170" id="flow">
-      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8b98a9"/></marker></defs>
-      <g><rect x="10" y="40" width="150" height="70" rx="10"/><text x="85" y="68" text-anchor="middle">raw CSV / Parquet</text><text x="85" y="88" text-anchor="middle" class="small">any relational database</text></g>
-      <g class="hot"><rect x="210" y="40" width="170" height="70" rx="10"/><text x="295" y="62" text-anchor="middle">strata init</text><text x="295" y="80" text-anchor="middle" class="small">rules + optional LLM agent</text><text x="295" y="96" text-anchor="middle" class="small">→ schema.json, reviewed by a human</text></g>
-      <g><rect x="430" y="40" width="170" height="70" rx="10"/><text x="515" y="62" text-anchor="middle">database states</text><text x="515" y="80" text-anchor="middle" class="small">D, D as of t, canary D′,</text><text x="515" y="96" text-anchor="middle" class="small">unknown-column probe</text></g>
-      <g class="hot"><rect x="650" y="40" width="170" height="70" rx="10"/><text x="735" y="62" text-anchor="middle">layer checks</text><text x="735" y="80" text-anchor="middle" class="small">run your code in a sandbox</text><text x="735" y="96" text-anchor="middle" class="small">on each state, compare outputs</text></g>
-      <g><rect x="870" y="40" width="120" height="70" rx="10"/><text x="930" y="62" text-anchor="middle">verdict</text><text x="930" y="80" text-anchor="middle" class="small">LEAK + witness, CLEAN,</text><text x="930" y="96" text-anchor="middle" class="small">UNCHECKABLE, ERROR</text></g>
-      <path d="M160 75H208"/><path d="M380 75H428"/><path d="M600 75H648"/><path d="M820 75H868"/>
-      <path d="M930 110V140H735V112"/><text x="832" y="156" text-anchor="middle" class="small">the coding agent repairs the code and reruns; exit codes 0/1/2/3 make it a CI gate</text>
-    </svg>
-    <h3>What it found</h3>
-    <div class="stats"><div><b>43 of 43</b><span>leaking code changes caught on 8 databases</span></div><div><b>0 of 55</b><span>harmless changes flagged</span></div><div><b>16</b><span>leaks a hand-written oracle for Olist had passed</span></div><div><b>27 of 27</b><span>agent-written training runs learn from rows after <i>t</i></span></div></div>
-    <table class="pb" id="pbTable"></table>
-    <p style="color:var(--muted);font-size:12.5px">Mutants: one time comparison changed at a time in a reference pipeline, each labelled by hand as a leak or harmless. Weaker detectors: cutting rows at <i>t</i> finds 11 of 25 leaking control programs, adding late dates and a canary finds 16, and both miss every overwritten value.</p>
-    <h3>Use it from a coding agent</h3>
-    <p>Install the package, drop <code>SKILL.md</code> into the agent's skills, and it will run the check before reporting a score. The skill says which check to call for which layer, how to read a witness, and that only a rerun may declare a leak fixed.</p>
-    <p><button class="primary" data-skill>Download SKILL.md</button> &nbsp; <a href="about.html">Project page</a> &nbsp; <a href="#" id="lnkRepo2">GitHub</a> &nbsp; <a href="#" id="lnkPaper2">Paper (ICSE 2027 demo)</a> &nbsp; <a href="https://github.com/PavelMarian/PITBench">PITBench</a></p>
-  </div>
+  <div class="sheet-head"><h2>What is STRATA?</h2><span class="spacer" style="flex:1"></span><a href="about.html" style="font-size:13px;margin-right:14px">Open as a page</a><button class="ghost" data-close>Close</button></div>
+  <div class="sheet-body about" id="aboutBody"><p style="color:var(--muted)">Loading…</p></div>
 </div></div>
 
 <!-- Schema viewer -->
@@ -394,12 +364,19 @@ $("#run").onclick = async () => {
 $$("[data-close]").forEach(b => b.onclick = () => b.closest(".modal").classList.remove("open"));
 $$(".modal").forEach(m => m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open") }));
 document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".modal.open").forEach(m => m.classList.remove("open")) });
-$("#btnAbout").onclick = () => $("#about").classList.add("open");
+let aboutLoaded = false;
+$("#btnAbout").onclick = async () => {
+  $("#about").classList.add("open"); if (aboutLoaded) return;
+  try {
+    const html = await (await fetch("about.html")).text();
+    const main = new DOMParser().parseFromString(html, "text/html").querySelector("main");
+    $("#aboutBody").innerHTML = main.innerHTML; aboutLoaded = true;
+    $$("#aboutBody [data-skill]").forEach(b => b.onclick = dl);
+    const m = {"#aboutBody #repo": "#lnkRepo", "#aboutBody #paper": "#lnkPaper"}; for (const k in m) { const a = $(k), src = $(m[k]); if (a && src) a.href = src.href; }
+  } catch (e) { $("#aboutBody").innerHTML = '<p>The project page could not be loaded here. <a href="about.html">Open it as a page.</a></p>'; }
+};
 const dl = () => { try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([SKILL], {type: "text/markdown"})); a.download = "SKILL.md"; document.body.appendChild(a); a.click(); a.remove(); toast("SKILL.md downloaded") } catch (e) { toast("Download is blocked here") } };
-$("#btnSkill").onclick = dl; $$("[data-skill]").forEach(b => b.onclick = dl);
-$("#pbTable").innerHTML = `<tr><th>Database</th><th>Domain</th><th>Rows</th><th>leaking controls found</th><th>correct controls flagged</th><th>violating mutants killed</th><th>harmless mutants flagged</th></tr>` +
-  PB.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="good">${r[3]}/${r[3]}</td><td class="good">0/${r[4]}</td><td class="good">${r[7]}/${r[7]}</td><td class="good">0/${r[8]}</td></tr>`).join("") +
-  `<tr><td><b>Total</b></td><td></td><td></td><td class="good"><b>25/25</b></td><td class="good"><b>0/9</b></td><td class="good"><b>43/43</b></td><td class="good"><b>0/55</b></td></tr>`;
+$("#btnSkill").onclick = dl;
 
 // ---------- schema viewer ----------
 const EXTRA_SCHEMAS = {
