@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STRATA workbench</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,700&display=swap">
+<style>
+/* One screen, no scrolling: a code editor on the left, the diagnosis and a
+   console on the right. Every terminal output is a recorded strata run. */
+:root {
+  --bg: #0f141b; --bar: #151c26; --panel: #182029; --panel2: #1e2833; --line: #2a3542;
+  --ink: #e4e9f0; --muted: #8b98a9; --dim: #5c6878; --accent: #5b9cf5; --accent-ink: #0b1220;
+  --leak: #ff6b5e; --leak-bg: #3a1d1b; --clean: #4cd98a; --clean-bg: #163125; --unk: #f3c46b; --unk-bg: #3b2f14; --err: #c48cff;
+  --kw: #c792ea; --str: #c3e88d; --com: #5f6f80; --num: #f78c6c; --fn: #82aaff; --hl-leak: rgba(255,107,94,.16); --hl-fix: rgba(76,217,138,.16);
+  --font: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace; --display: "Bricolage Grotesque", var(--font);
+}
+* { box-sizing: border-box }
+html, body { height: 100%; margin: 0 }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font); display: flex; flex-direction: column; overflow: hidden }
+button, select { font: inherit; color: inherit }
+button { cursor: pointer; border: 1px solid var(--line); background: var(--panel2); border-radius: 8px; padding: 6px 12px }
+button:hover { border-color: var(--accent) }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600 }
+button.primary:disabled { opacity: .5; cursor: default }
+button.ghost { background: transparent }
+select { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; max-width: 320px }
+a { color: var(--accent); text-decoration: none }
+a:hover { text-decoration: underline }
+code, pre, .mono { font-family: var(--mono) }
+
+/* top bar */
+.bar { display: flex; align-items: center; gap: 10px; padding: 8px 16px; background: var(--bar); border-bottom: 1px solid var(--line); flex: none }
+.logo { display: flex; align-items: center; gap: 8px; font: 700 18px var(--display); letter-spacing: .04em; margin-right: 8px }
+.logo svg { width: 22px; height: 22px }
+.bar label { color: var(--muted); font-size: 12px; margin-left: 6px }
+.bar .spacer { flex: 1 }
+.bar .links a { color: var(--muted); margin-left: 14px; font-size: 13px }
+
+/* workbench */
+.work { flex: 1; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 1px; background: var(--line); min-height: 0 }
+.pane { background: var(--panel); display: flex; flex-direction: column; min-height: 0; min-width: 0 }
+.pane-head { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--panel2); font-size: 13px; flex: none }
+.pane-head .file { font-family: var(--mono); font-weight: 500 }
+.pane-head .meta { color: var(--muted) }
+.pane-head .spacer { flex: 1 }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; border: 1px solid var(--line); color: var(--muted) }
+.chip.layer { color: var(--accent); border-color: var(--accent) }
+
+/* editor */
+.code { flex: 1; overflow: auto; margin: 0; padding: 12px 0; font-size: 13px; line-height: 1.55; counter-reset: ln }
+.code .ln { display: flex; min-height: 1.55em; white-space: pre; transition: background .4s }
+.code .ln .t { flex: 1 }
+.code .ln::before { counter-increment: ln; content: counter(ln); width: 46px; flex: none; text-align: right; padding-right: 14px; color: var(--dim); user-select: none }
+.code .ln.leak { background: var(--hl-leak); box-shadow: inset 3px 0 var(--leak) }
+.code .ln.fix { background: var(--hl-fix); box-shadow: inset 3px 0 var(--clean) }
+.code .ln.dim { opacity: .45 }
+.kw { color: var(--kw) } .str { color: var(--str) } .com { color: var(--com); font-style: italic } .num { color: var(--num) } .fn { color: var(--fn) }
+.datatable { padding: 14px; overflow: auto }
+.datatable table { border-collapse: collapse; font-size: 12.5px; font-family: var(--mono) }
+.datatable th, .datatable td { padding: 4px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap }
+.datatable th { color: var(--muted); font-weight: 500 }
+.datatable .note { color: var(--muted); font-family: var(--font); font-size: 13px; margin: 10px 0 0 }
+
+/* diagnosis */
+.side { min-width: 0; display: grid; grid-template-rows: minmax(0, 3fr) minmax(0, 2fr); gap: 1px; background: var(--line); min-height: 0 }
+.diag { overflow: auto; padding: 14px }
+.empty { color: var(--muted); padding: 30px 10px; text-align: center }
+.empty b { color: var(--ink) }
+.card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; background: var(--panel2) }
+@keyframes rise { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+.card h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .05em }
+.card p { margin: 6px 0 }
+.verdict { display: inline-block; font: 700 22px var(--display); padding: 4px 14px; border-radius: 8px; letter-spacing: .04em }
+.v-LEAK { color: var(--leak); background: var(--leak-bg) } .v-CLEAN { color: var(--clean); background: var(--clean-bg) } .v-UNCHECKABLE { color: var(--unk); background: var(--unk-bg) } .v-ERROR { color: var(--err) }
+.vrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap }
+.vrow .what { color: var(--muted) }
+.wit { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px }
+.wit th, .wit td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: left; font-family: var(--mono); white-space: nowrap }
+.wit th { color: var(--muted); font-weight: 500; font-family: var(--font) }
+.wit td.full { color: var(--leak) } .wit td.att { color: var(--clean) }
+.wit tr.hot { background: var(--hl-leak) }
+.diff { font-family: var(--mono); font-size: 12.5px; background: var(--bg); border-radius: 8px; padding: 8px 10px; overflow: auto; white-space: pre; margin: 8px 0 }
+.diff .del { background: var(--leak-bg); color: var(--leak); display: block } .diff .add { background: var(--clean-bg); color: var(--clean); display: block } .diff .ctx { color: var(--muted); display: block }
+.chart { width: 100%; height: auto; display: block; margin-top: 6px }
+.chart text { font-family: var(--mono); font-size: 10px; fill: var(--muted) }
+.legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 4px }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px }
+
+/* console */
+.console { background: #0b1016; display: flex; flex-direction: column; min-height: 0 }
+.term { flex: 1; overflow: auto; margin: 0; padding: 10px 14px; font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; color: #c9d3df }
+.term .cmd { color: #9cc3f5 } .term .dimline { color: var(--dim) }
+.term .LEAK { color: var(--leak); font-weight: 600 } .term .CLEAN { color: var(--clean); font-weight: 600 } .term .UNCHECKABLE { color: var(--unk); font-weight: 600 } .term .ERROR { color: var(--err); font-weight: 600 }
+.term .cursor { display: inline-block; width: 7px; height: 13px; background: #c9d3df; vertical-align: -2px; animation: blink 1s steps(1) infinite }
+@keyframes blink { 50% { opacity: 0 } }
+
+/* modals */
+.modal { position: fixed; inset: 0; background: rgba(5,8,12,.7); display: none; align-items: center; justify-content: center; z-index: 20; padding: 24px }
+.modal.open { display: flex }
+.sheet { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; width: min(1100px, 100%); max-height: 100%; display: flex; flex-direction: column; overflow: hidden }
+.sheet-head { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid var(--line); flex: none }
+.sheet-head h2 { margin: 0; font: 700 20px var(--display) }
+.sheet-body { overflow: auto; padding: 18px 22px }
+.sheet-body h3 { font: 700 17px var(--display); margin: 22px 0 8px }
+.sheet-body h3:first-child { margin-top: 0 }
+.sheet-body p { max-width: 70ch }
+.places { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 }
+.places div { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--panel2) }
+.places b { font-family: var(--mono); color: var(--accent) }
+.rule { font-family: var(--mono); font-size: 16px; padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--panel2); border-radius: 0 8px 8px 0; margin: 10px 0 }
+.stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 10px 0 }
+.stats b { display: block; font: 700 28px var(--display) }
+.stats span { color: var(--muted); font-size: 13px }
+.pb { border-collapse: collapse; font-size: 12.5px; width: 100% }
+.pb th, .pb td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right }
+.pb th:first-child, .pb td:first-child, .pb td:nth-child(2) { text-align: left }
+.pb th { color: var(--muted); font-weight: 500 }
+.pb .good { color: var(--clean) } .pb .bad { color: var(--leak) }
+.flow { width: 100%; height: auto }
+.flow text { font-family: var(--font); font-size: 12px; fill: var(--ink) }
+.flow .small { font-size: 10.5px; fill: var(--muted) }
+.flow rect { fill: var(--panel2); stroke: var(--line) }
+.flow .hot rect { stroke: var(--accent) }
+.flow path { stroke: var(--muted); fill: none; stroke-width: 1.4; marker-end: url(#arr) }
+
+/* schema viewer */
+.schema-wrap { position: relative }
+.schema-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 46px 34px; position: relative; z-index: 1 }
+.tbl { border: 1px solid var(--line); border-radius: 10px; background: var(--panel2); overflow: hidden; cursor: pointer; transition: border-color .2s }
+.tbl:hover, .tbl.sel { border-color: var(--accent) }
+.tbl h4 { margin: 0; padding: 7px 10px; font: 500 13px var(--mono); background: var(--panel); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 8px }
+.tbl h4 .chip { font-size: 10px }
+.tbl ul { list-style: none; margin: 0; padding: 6px 0 }
+.tbl li { display: flex; justify-content: space-between; gap: 8px; padding: 2px 10px; font: 12px var(--mono); white-space: nowrap }
+.tbl li span:first-child { overflow: hidden; text-overflow: ellipsis }
+.tbl li .r { flex: none }
+.tbl li .r { font: 10.5px var(--font); color: var(--muted); text-transform: uppercase; letter-spacing: .04em }
+.r-time { color: var(--accent) !important } .r-self { color: var(--unk) !important } .r-unk { color: var(--leak) !important } .r-plan { color: var(--clean) !important } .r-snap { color: var(--leak) !important }
+.wires { position: absolute; inset: 0; z-index: 0; pointer-events: none }
+.wires path { stroke: var(--dim); stroke-width: 1.4; fill: none; stroke-dasharray: 4 3 }
+.reason { margin-top: 16px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--panel2); min-height: 60px }
+.reason h4 { margin: 0 0 6px; font: 500 13px var(--mono) }
+.reason p { margin: 0; color: var(--ink) }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.seg button { border: 0; border-radius: 0; background: transparent }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink) }
+.toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 30 }
+@media (max-width: 900px) { body { overflow: auto } .work { grid-template-columns: 1fr } .schema-grid { grid-template-columns: 1fr 1fr } }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M6 12h12M8 17h8"/></svg>STRATA</div>
+  <label for="db">Database</label>
+  <select id="db"></select>
+  <label for="ex">Example</label>
+  <select id="ex"></select>
+  <button class="primary" id="run">▶ Run check</button>
+  <div class="spacer"></div>
+  <button class="ghost" id="btnSchema">Schema</button>
+  <button class="ghost" id="btnAbout">What is STRATA?</button>
+  <button id="btnSkill">Download skill</button>
+  <span class="links"><a href="about.html">About</a><a href="#" id="lnkRepo">GitHub</a><a href="#" id="lnkPaper">Paper</a></span>
+</header>
+
+<main class="work">
+  <section class="pane" id="editorPane">
+    <div class="pane-head"><span class="file" id="fileName">—</span><span class="chip layer" id="layerChip">features</span><span class="meta" id="fileMeta"></span><span class="spacer"></span><span class="meta" id="fileHint"></span></div>
+    <div id="editor" style="flex:1;display:flex;flex-direction:column;min-height:0"></div>
+  </section>
+  <aside class="side">
+    <section class="pane"><div class="pane-head">Diagnosis<span class="spacer"></span><span class="meta" id="diagMeta"></span></div><div class="diag" id="diag"><div class="empty">Pick an example and press <b>Run check</b>.<br>STRATA runs the code on the database as it is and as it was at <i>t</i>, then compares the outputs.</div></div></section>
+    <section class="pane console"><div class="pane-head" style="background:#0f1620">Console<span class="spacer"></span><span class="meta mono">strata 0.1.0</span></div><pre class="term" id="term"><span class="dimline">$ </span><span class="cursor"></span></pre></section>
+  </aside>
+</main>
+
+<!-- What is STRATA? -->
+<div class="modal" id="about"><div class="sheet">
+  <div class="sheet-head"><h2>What is STRATA?</h2><span class="spacer" style="flex:1"></span><button class="ghost" data-close>Close</button></div>
+  <div class="sheet-body">
+    <h3>The problem</h3>
+    <p>Coding agents now write whole ML pipelines over relational data with timestamps. The code runs, the tests pass, the score looks good. A model built to predict what happens after a date <i>t</i> can still use facts that only appeared after <i>t</i>. Offline it looks excellent; in production it fails, and nothing in the code or the metric shows why. This is a point-in-time (PIT) leak.</p>
+    <p>The future can get in at five places, and a check of one place passes a pipeline that leaks in another:</p>
+    <div class="places">
+      <div><b>task</b> rows for entities that do not exist yet at <i>t</i>; labels used before they are complete</div>
+      <div><b>features</b> rows created after <i>t</i>; dates filled in later; values overwritten at the end of the data</div>
+      <div><b>model</b> training rows whose outcome was not known at <i>t</i></div>
+      <div><b>in-context</b> few-shot examples for an LLM taken from after <i>t</i></div>
+      <div><b>agent</b> a model that recognises an entity instead of learning about it from the data</div>
+    </div>
+    <h3>One rule for all five</h3>
+    <div class="rule">output on D &nbsp;=&nbsp; output on D as of <i>t</i></div>
+    <p>STRATA never reads the code. It runs each layer on the full database and on the database as it was at <i>t</i> (rows that did not exist yet removed, values filled in later blanked) and compares the outputs. A difference is a LEAK with a witness: the time, the entity, the column and the channel that carried the future. No difference at the tested times is CLEAN. If the output depends on a column whose availability nobody knows, the verdict is UNCHECKABLE, never a false CLEAN.</p>
+    <h3>How it is built</h3>
+    <svg class="flow" viewBox="0 0 1000 170" id="flow">
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8b98a9"/></marker></defs>
+      <g><rect x="10" y="40" width="150" height="70" rx="10"/><text x="85" y="68" text-anchor="middle">raw CSV / Parquet</text><text x="85" y="88" text-anchor="middle" class="small">any relational database</text></g>
+      <g class="hot"><rect x="210" y="40" width="170" height="70" rx="10"/><text x="295" y="62" text-anchor="middle">strata init</text><text x="295" y="80" text-anchor="middle" class="small">rules + optional LLM agent</text><text x="295" y="96" text-anchor="middle" class="small">→ schema.json, reviewed by a human</text></g>
+      <g><rect x="430" y="40" width="170" height="70" rx="10"/><text x="515" y="62" text-anchor="middle">database states</text><text x="515" y="80" text-anchor="middle" class="small">D, D as of t, canary D′,</text><text x="515" y="96" text-anchor="middle" class="small">unknown-column probe</text></g>
+      <g class="hot"><rect x="650" y="40" width="170" height="70" rx="10"/><text x="735" y="62" text-anchor="middle">layer checks</text><text x="735" y="80" text-anchor="middle" class="small">run your code in a sandbox</text><text x="735" y="96" text-anchor="middle" class="small">on each state, compare outputs</text></g>
+      <g><rect x="870" y="40" width="120" height="70" rx="10"/><text x="930" y="62" text-anchor="middle">verdict</text><text x="930" y="80" text-anchor="middle" class="small">LEAK + witness, CLEAN,</text><text x="930" y="96" text-anchor="middle" class="small">UNCHECKABLE, ERROR</text></g>
+      <path d="M160 75H208"/><path d="M380 75H428"/><path d="M600 75H648"/><path d="M820 75H868"/>
+      <path d="M930 110V140H735V112"/><text x="832" y="156" text-anchor="middle" class="small">the coding agent repairs the code and reruns; exit codes 0/1/2/3 make it a CI gate</text>
+    </svg>
+    <h3>What it found</h3>
+    <div class="stats"><div><b>43 of 43</b><span>leaking code changes caught on 8 databases</span></div><div><b>0 of 55</b><span>harmless changes flagged</span></div><div><b>16</b><span>leaks a hand-written oracle for Olist had passed</span></div><div><b>27 of 27</b><span>agent-written training runs learn from rows after <i>t</i></span></div></div>
+    <table class="pb" id="pbTable"></table>
+    <p style="color:var(--muted);font-size:12.5px">Mutants: one time comparison changed at a time in a reference pipeline, each labelled by hand as a leak or harmless. Weaker detectors: cutting rows at <i>t</i> finds 11 of 25 leaking control programs, adding late dates and a canary finds 16, and both miss every overwritten value.</p>
+    <h3>Use it from a coding agent</h3>
+    <p>Install the package, drop <code>SKILL.md</code> into the agent's skills, and it will run the check before reporting a score. The skill says which check to call for which layer, how to read a witness, and that only a rerun may declare a leak fixed.</p>
+    <p><button class="primary" data-skill>Download SKILL.md</button> &nbsp; <a href="about.html">Project page</a> · <a href="#" id="lnkRepo2">GitHub</a> · <a href="#" id="lnkPaper2">Paper (ICSE 2027 demo)</a> · <a href="https://github.com/PavelMarian/PITBench">PITBench</a></p>
+  </div>
+</div></div>
+
+<!-- Schema viewer -->
+<div class="modal" id="schema"><div class="sheet">
+  <div class="sheet-head"><h2>Availability schema · <span id="schemaDb">Olist</span></h2>
+    <span class="seg" id="schemaMode"><button aria-pressed="true" data-mode="heuristic">Rules only</button><button aria-pressed="false" data-mode="llm">With the LLM agent</button></span>
+    <span style="flex:1"></span><button class="ghost" data-close>Close</button></div>
+  <div class="sheet-body">
+    <p style="color:var(--muted);margin-top:0">When does a row appear, and which values arrive later? <code>strata init</code> drafts this from the raw files. Click a table to see the agent's reason. Dashed line: a table inherits its time through a key. <span class="r-time">row time</span> · <span class="r-self">late</span>: known only at its own value · <span class="r-plan">planned</span>: known with the row · <span class="r-unk">unknown</span>: mutable without history · <span class="r-snap">snapshot</span>: valid only at the end of the data.</p>
+    <div class="schema-wrap"><svg class="wires" id="wires"></svg><div class="schema-grid" id="schemaGrid"></div></div>
+    <div class="reason" id="reason"><p style="color:var(--muted)">Click a table.</p></div>
+  </div>
+</div></div>
+
+<script src="data.js"></script>
+<script>
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sleep = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+const V = v => `<span class="verdict v-${v}">${v}</span>`;
+const colorize = t => esc(t).replace(/\b(LEAK|CLEAN|UNCHECKABLE|ERROR)\b/g, '<span class="$1">$1</span>');
+const shortCmd = c => c.replace(/demo\/strata\/(programs|data)\//g, "").replace(/strata\/examples\/olist\//g, "").replace(/PITFALL_olist_data/, "olist/").replace("/tmp/olist_schema.json", "schema.json");
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200) }
+
+// ---------- examples: every one is a recorded strata run ----------
+const DBS = {
+  olist: {name: "Olist marketplace · 8 tables"},
+  f1: {name: "RelBench F1 · driver-top3"},
+  event: {name: "RelBench Event · user-ignore"},
+  shop: {name: "Shop · synthetic, 3 tables"},
+};
+const EX = [
+  {id: "leaky", db: "olist", layer: "features", title: "Product features written by a code model", file: "feature_program.py", meta: "written by a code model from a task description", kind: "code", code: () => PROG.leaky, rec: "leak",
+   mark: l => l.includes("db['reviews'][['order_id', 'review_score']]") || l.includes("review_data = items_target"),
+   explain: "The program cuts order items at <i>t</i> but joins <b>all</b> reviews of those orders. A review written after <i>t</i> did not exist yet, so the count and the mean score differ between the full database and the database as of <i>t</i>.",
+   fix: {title: "Cut reviews at their creation date", diff: [["ctx", "        review_data = items_target[['order_id', 'product_id']].merge("], ["del", "            db['reviews'][['order_id', 'review_score']],"], ["add", "            db['reviews'].loc[db['reviews']['review_creation_date'] <= seed_time,"], ["add", "                              ['order_id', 'review_score']],"], ["ctx", "            on='order_id',"]],
+         next: "fixed"}},
+  {id: "fixed", db: "olist", layer: "features", title: "Same program after the fix", file: "feature_program.py", meta: "reviews cut at review_creation_date", kind: "code", code: () => PROG.fixed, rec: "fixed",
+   mark: l => l.includes("review_creation_date") || l.includes("['order_id', 'review_score']],"), markClass: "fix",
+   explain: "The same output on the full database and on the database as of every tested time, for the witness run, the canary (future rewritten with marker values) and the unknown-column probe."},
+  {id: "status", db: "olist", layer: "features", title: "Features that drop cancelled orders", file: "status_features.py", meta: "written by a code model; reads order_status", kind: "code", code: () => PROG.status, rec: "status",
+   mark: l => l.includes("order_status"),
+   explain: "Olist stores one <code>order_status</code> per order and overwrites it. The status an order had at <i>t</i> cannot be rebuilt from the data, so the schema marks the column <b>unknown</b>. The program may be correct or may leak, and the data cannot tell which: STRATA says so instead of passing it."},
+  {id: "model", db: "f1", layer: "model", title: "Agent-written training script · does it learn from later races?", file: "run.sh", meta: "solution.py by a commercial coding agent, run 1 of 9", kind: "run", rec: "model",
+   explain: "The script is run as it is, once with the race results known at the prediction time and once with the 412 results that came later. Grey: prediction without the later rows. Red: with them. The script trains on the whole table it is given and never bounds it by the 30-day label horizon."},
+  {id: "agent", db: "f1", layer: "agent", title: "Same script · does it recognise the drivers?", file: "run.sh", meta: "every driverId replaced by a made-up one, twice", kind: "run", rec: "agent",
+   explain: "Both anonymisations keep order and equality, so a model that learns only from the data cannot tell them from the real IDs. The predictions do not move: no recall of real drivers."},
+  {id: "agent_hashed", db: "event", layer: "agent", title: "Agent-written script that turns user IDs into numbers", file: "run.sh", meta: "solution.py by the same agent, run 2, RelBench Event", kind: "run", rec: "agent_hashed",
+   explain: "The two made-up renamings disagree with each other, so the output depends on how IDs are <b>spelled</b> (a numeric or hashed ID feature). That is not knowledge of real users, and identity recall cannot be separated from it: UNCHECKABLE rather than a false alarm."},
+  {id: "task", db: "shop", layer: "task", title: "A prediction table with customers who do not exist yet", file: "task.csv", meta: "rows: (ts, customer_id, label)", kind: "task", rec: "task",
+   explain: "Three rows predict customers on 2020-06-01, but those customers sign up later. A row like this tells the model that the customer will exist. STRATA compares every task row with the entity's creation date from the schema."},
+];
+let cur = null, state = {code: null, ran: false};
+
+// ---------- top bar ----------
+const dbSel = $("#db"), exSel = $("#ex");
+for (const k in DBS) dbSel.append(new Option(DBS[k].name, k));
+function fillExamples(db, pick) {
+  exSel.innerHTML = "";
+  EX.filter(e => e.db === db).forEach(e => exSel.append(new Option(e.title, e.id)));
+  load(pick || exSel.value);
+}
+dbSel.onchange = () => fillExamples(dbSel.value);
+exSel.onchange = () => load(exSel.value);
+
+// ---------- editor ----------
+function hl(line) {
+  // one pass: comment | string | number | keyword | call
+  const re = /(#.*$)|('[^']*'|"[^"]*")|(\b\d+(?:\.\d+)?\b)|(\b(?:import|from|def|return|if|else|for|in|not|lambda|as|and|or)\b)|([a-z_][a-z_0-9]*)(?=\()/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(line))) {
+    out += esc(line.slice(last, m.index));
+    const cls = m[1] ? "com" : m[2] ? "str" : m[3] ? "num" : m[4] ? "kw" : "fn";
+    out += `<span class="${cls}">${esc(m[0])}</span>`; last = m.index + m[0].length;
+  }
+  return out + esc(line.slice(last));
+}
+function renderCode(code, mark, cls) {
+  const lines = code.replace(/\n+$/, "").split("\n");
+  return `<pre class="code">${lines.map(l => `<div class="ln${mark && mark(l) ? " " + (cls || "leak") : ""}"><span class="t">${hl(l) || " "}</span></div>`).join("")}</pre>`;
+}
+function renderRun(ex) {
+  const r = REC[ex.rec];
+  const cmd = shortCmd(r.cmd).replace(/ --/g, " \\\n    --");
+  const files = ex.db === "f1" ? [["driver-top3_history.parquet", "race results: date, driverId, qualifying (top-3 label), 1 331 rows"], ["solution.py", "written by the agent: reads {task_dir}, fits a model, writes {out}"]]
+            : [["user-ignore_past.parquet / _query.parquet", "events: timestamp, user, target"], ["solution.py", "written by the agent, run 2"]];
+  const sh = `# ${ex.title}\n# The script is not edited. STRATA only changes which rows it sees.\n${cmd}\n`;
+  return renderCode(sh, null) + `<div class="datatable" style="flex:none;border-top:1px solid var(--line)"><table><tr><th>file</th><th>what it is</th></tr>${files.map(f => `<tr><td>${f[0]}</td><td style="font-family:var(--font)">${f[1]}</td></tr>`).join("")}</table>
+    <p class="note">Placeholders <code>{task_dir} {split} {out}</code> are filled by STRATA for each database state. The script source is in the replication package.</p></div>`;
+}
+function renderTask() {
+  const rows = [["2020-06-01", 0, "?", "2020-06-19"], ["2020-06-01", 9, "?", "2020-06-11"], ["2020-06-01", 11, "?", "2020-07-01"]];
+  return renderCode(`# task.csv: who to score at ts, and what happened next\n# schema.json (shop): entities.customer = {table: customers, key: customer_id, created: created_at}\n${shortCmd(REC.task.cmd)}\n`, null) +
+    `<div class="datatable" style="flex:none;border-top:1px solid var(--line)"><table><tr><th>ts</th><th>customer_id</th><th>label</th><th>customers.created_at</th></tr>${rows.map(r => `<tr class="hot" style="background:var(--hl-leak)"><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td style="color:var(--leak)">${r[3]}</td></tr>`).join("")}<tr><td colspan="4" style="color:var(--muted)">… other rows pass</td></tr></table><p class="note">Three rows of the task table against the creation dates of their customers.</p></div>`;
+}
+function load(id) {
+  cur = EX.find(e => e.id === id); state = {code: cur.kind === "code" ? cur.code() : null, ran: false};
+  exSel.value = id; dbSel.value = cur.db;
+  $("#fileName").textContent = cur.file; $("#layerChip").textContent = cur.layer; $("#fileMeta").textContent = cur.meta; $("#fileHint").textContent = "";
+  $("#editor").innerHTML = cur.kind === "code" ? renderCode(state.code, null) : cur.kind === "run" ? renderRun(cur) : renderTask();
+  $("#diag").innerHTML = `<div class="empty">Press <b>Run check</b>.<br><span style="font-size:12.5px">${cur.layer} layer · ${esc(DBS[cur.db].name)}</span></div>`; $("#diagMeta").textContent = "";
+  $("#term").innerHTML = '<span class="dimline">$ </span><span class="cursor"></span>';
+  $("#run").disabled = false;
+}
+
+// ---------- console ----------
+async function typeRun(rec) {
+  const term = $("#term"); term.innerHTML = "";
+  const cmd = shortCmd(rec.cmd);
+  let typed = '<span class="dimline">$ </span><span class="cmd">';
+  term.innerHTML = typed + '</span><span class="cursor"></span>';
+  for (let i = 0; i < cmd.length; i += 3) { term.innerHTML = typed + esc(cmd.slice(0, i + 3)) + '</span><span class="cursor"></span>'; term.scrollTop = term.scrollHeight; await sleep(8); }
+  await sleep(350);
+  let body = typed + esc(cmd) + "</span>\n";
+  for (const line of rec.stdout.split("\n")) { body += colorize(line) + "\n"; term.innerHTML = body + '<span class="cursor"></span>'; term.scrollTop = term.scrollHeight; await sleep(line.startsWith("  witness") ? 120 : 70); }
+  body += `<span class="dimline">exit ${rec.exit} · ${rec.seconds} s</span>\n`;
+  term.innerHTML = body + '<span class="dimline">$ </span><span class="cursor"></span>'; term.scrollTop = term.scrollHeight;
+}
+const witnesses = rec => rec.stdout.split("\n").filter(l => l.trim().startsWith("witness:")).map(l => JSON.parse(l.slice(l.indexOf("{"))));
+const verdictOf = rec => (rec.stdout.match(/\b(LEAK|CLEAN|UNCHECKABLE|ERROR)\b/) || [])[1];
+
+// ---------- diagnosis ----------
+function diagnose(ex, rec) {
+  const v = verdictOf(rec), w = witnesses(rec);
+  let html = `<div class="card"><div class="vrow">${V(v)}<span class="what">${ex.layer} layer · ${w.length ? w.length + " witness" + (w.length > 1 ? "es" : "") : v === "CLEAN" ? "no difference at the tested times" : "cannot be decided"}</span></div><p>${ex.explain}</p></div>`;
+  if (ex.layer === "features" && v === "LEAK") {
+    html += `<div class="card"><h3>Witnesses</h3><table class="wit"><tr><th>t</th><th>column</th><th>product</th><th>on D</th><th>as of t</th><th>channel</th></tr>${w.map((x, i) => `<tr class="${i === 0 ? "hot" : ""}"><td>${x.time.slice(0, 10)}</td><td>${x.column}</td><td>${x.row.slice(0, 8)}…</td><td class="full">${+x.full.toFixed(3)}</td><td class="att">${+x.at_t.toFixed(3)}</td><td>${x.channels.length ? x.channels.join(", ") : "—"}</td></tr>`).join("")}</table>
+      <p style="color:var(--muted);font-size:12.5px;margin-top:8px">Channel: the one table whose rows, cut at <i>t</i>, make the difference disappear. The canary also fires on <code>review_mean_score</code>: the future rewritten with marker values still changes it.</p></div>`;
+    html += `<div class="card"><h3>Suggested fix · ${ex.fix.title}</h3><div class="diff">${ex.fix.diff.map(d => `<span class="${d[0]}">${d[0] === "del" ? "- " : d[0] === "add" ? "+ " : "  "}${esc(d[1])}</span>`).join("")}</div><button class="primary" id="applyFix">Apply fix</button> <span style="color:var(--muted);font-size:12.5px">then run the check again; only a rerun may declare it fixed</span></div>`;
+  }
+  if (ex.layer === "features" && v === "UNCHECKABLE") {
+    const cols = (rec.stdout.match(/unknown\s+UNCHECKABLE columns=([^\n]+)/) || [])[1] || "";
+    html += `<div class="card"><h3>Output columns that depend on an unknown column</h3><p class="mono" style="font-size:12.5px">${esc(cols).replace(/,/g, ", ")}</p><p style="color:var(--muted);font-size:12.5px">Probe: the unknown column is perturbed; these outputs change. Witness and canary runs are CLEAN, so the rest of the program is fine. If the data owner can supply a status history, declare it in the schema and rerun.</p></div>`;
+  }
+  if (ex.layer === "features" && v === "CLEAN") html += `<div class="card"><h3>What was compared</h3><table class="wit"><tr><th>t</th><th>witness</th><th>canary</th><th>unknown probe</th></tr>${["2018-01-01", "2018-04-01", "2018-07-01"].map(t => `<tr><td>${t}</td><td class="att">CLEAN</td><td class="att">CLEAN</td><td class="att">CLEAN</td></tr>`).join("")}</table><p style="color:var(--muted);font-size:12.5px;margin-top:8px">CLEAN is scoped to the tested times and entities. It is not a proof.</p></div>`;
+  if (ex.layer === "model") html += modelCard(w[0]);
+  if (ex.layer === "agent") html += agentCard(ex.id === "agent" ? AGENT.learns_from_data : AGENT.hashes_ids, v);
+  if (ex.layer === "task") html += `<div class="card"><h3>Witnesses</h3><table class="wit"><tr><th>customer</th><th>row time</th><th>created</th><th>too early by</th></tr>${w.map(x => `<tr><td>${x.entity}</td><td>${x.row_time.slice(0, 10)}</td><td class="full">${x.created.slice(0, 10)}</td><td>${Math.round((new Date(x.created) - new Date(x.row_time)) / 864e5)} days</td></tr>`).join("")}</table></div>`;
+  $("#diag").innerHTML = html; $("#diagMeta").textContent = `exit ${rec.exit} · ${rec.seconds} s`;
+  const b = $("#applyFix"); if (b) b.onclick = applyFix;
+}
+function modelCard(w) {
+  const rows = [...MODEL.rows].sort((a, b) => Math.abs(b.full - b.at_t) - Math.abs(a.full - a.at_t));
+  const H = 16, W = 520, L = 60, R = 30, n = rows.length, h = n * H + 30;
+  const x = v => L + v * (W - L - R);
+  let s = `<svg class="chart" viewBox="0 0 ${W} ${h}">`;
+  [0, .25, .5, .75, 1].forEach(v => s += `<line x1="${x(v)}" y1="18" x2="${x(v)}" y2="${h - 10}" stroke="#2a3542"/><text x="${x(v)}" y="12" text-anchor="middle">${v}</text>`);
+  rows.forEach((r, i) => { const y = 24 + i * H; const a = x(r.at_t), b = x(r.full);
+    s += `<text x="${L - 6}" y="${y + 9}" text-anchor="end">#${r.driver}${r.label ? " ★" : ""}</text><line x1="${a}" y1="${y + 5}" x2="${b}" y2="${y + 5}" stroke="#ff6b5e" stroke-opacity=".5" stroke-width="2"/><circle cx="${a}" cy="${y + 5}" r="4" fill="#8b98a9"/><circle cx="${b}" cy="${y + 5}" r="4" fill="#ff6b5e"/>`; });
+  s += "</svg>";
+  return `<div class="card"><h3>Prediction per driver at t = ${MODEL.t}</h3>${s}<div class="legend"><span><i style="background:#8b98a9"></i>history ≤ t (${MODEL.n_past} rows)</span><span><i style="background:#ff6b5e"></i>+ ${MODEL.n_after} later rows</span><span>★ actually in top 3</span></div>
+    <table class="wit" style="margin-top:10px"><tr><th>max |Δ score|</th><th>AUC at t</th><th>AUC with later rows</th><th>largest move</th></tr><tr><td class="full">${w.score_full && (Math.abs(w.score_full - w.score_at_t)).toFixed(2)}</td><td>0.711</td><td class="full">0.930</td><td>driver #${w.entity}: ${w.score_at_t.toFixed(3)} → ${w.score_full.toFixed(3)}</td></tr></table>
+    <p style="color:var(--muted);font-size:12.5px;margin-top:8px">A high score alone proves nothing: in 10 of 27 such runs the AUC did not rise, and the verdict rests on the outputs.</p></div>`;
+}
+function agentCard(a, v) {
+  const d = (p, q) => Math.abs(p - q) > 0.0005;
+  return `<div class="card"><h3>Predictions with real and made-up identities</h3><table class="wit"><tr><th>id</th><th>anonymised</th><th>original</th><th>anon 1</th><th>anon 2</th></tr>${a.ids.map((id, i) => `<tr><td>${id}</td><td>${a.anon_ids[i]}</td><td>${a.original[i].toFixed(4)}</td><td class="${d(a.original[i], a.anon1[i]) ? "full" : ""}">${a.anon1[i].toFixed(4)}</td><td class="${d(a.anon1[i], a.anon2[i]) ? "full" : ""}">${a.anon2[i].toFixed(4)}</td></tr>`).join("")}</table>
+    <p style="color:var(--muted);font-size:12.5px;margin-top:8px">${v === "CLEAN" ? "Three identical columns: the script learns from the data only." : "Red cells differ from the column to their left. anon 1 and anon 2 disagree, so the script depends on the spelling of the ID."}</p></div>`;
+}
+async function applyFix() {
+  const next = EX.find(e => e.id === cur.fix.next);
+  $("#applyFix").disabled = true; toast("Fix applied: reviews cut at review_creation_date");
+  await sleep(300);
+  exSel.value = next.id; cur = next; state = {code: next.code(), ran: false};
+  $("#fileName").textContent = next.file; $("#fileMeta").textContent = next.meta; $("#fileHint").textContent = "modified · run the check again";
+  $("#editor").innerHTML = renderCode(state.code, next.mark, "fix");
+  const el = $("#editor .ln.fix"); if (el) el.scrollIntoView({block: "center", behavior: reduce ? "auto" : "smooth"});
+  $("#diag").innerHTML = `<div class="empty">Fix applied. Press <b>Run check</b> again.<br><span style="font-size:12.5px">Only a rerun may declare a leak fixed.</span></div>`;
+}
+$("#run").onclick = async () => {
+  const rec = REC[cur.rec]; $("#run").disabled = true; $("#diag").innerHTML = '<div class="empty">Running on D and on D as of t…</div>';
+  await typeRun(rec);
+  if (cur.kind === "code") { $("#editor").innerHTML = renderCode(state.code, cur.mark, cur.markClass); const el = $("#editor .ln.leak, #editor .ln.fix"); if (el) el.scrollIntoView({block: "center", behavior: reduce ? "auto" : "smooth"}); }
+  diagnose(cur, rec); $("#run").disabled = false;
+};
+
+// ---------- modals ----------
+$$("[data-close]").forEach(b => b.onclick = () => b.closest(".modal").classList.remove("open"));
+$$(".modal").forEach(m => m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open") }));
+document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".modal.open").forEach(m => m.classList.remove("open")) });
+$("#btnAbout").onclick = () => $("#about").classList.add("open");
+const dl = () => { try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([SKILL], {type: "text/markdown"})); a.download = "SKILL.md"; document.body.appendChild(a); a.click(); a.remove(); toast("SKILL.md downloaded") } catch (e) { toast("Download is blocked here") } };
+$("#btnSkill").onclick = dl; $$("[data-skill]").forEach(b => b.onclick = dl);
+$("#pbTable").innerHTML = `<tr><th>Database</th><th>Domain</th><th>Rows</th><th>leaking controls found</th><th>correct controls flagged</th><th>violating mutants killed</th><th>harmless mutants flagged</th></tr>` +
+  PB.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="good">${r[3]}/${r[3]}</td><td class="good">0/${r[4]}</td><td class="good">${r[7]}/${r[7]}</td><td class="good">0/${r[8]}</td></tr>`).join("") +
+  `<tr><td><b>Total</b></td><td></td><td></td><td class="good"><b>25/25</b></td><td class="good"><b>0/9</b></td><td class="good"><b>43/43</b></td><td class="good"><b>0/55</b></td></tr>`;
+
+// ---------- schema viewer ----------
+const EXTRA_SCHEMAS = {
+  f1: {results: {time: "date", keys: ["driverId", "raceId"], label: "qualifying (top 3), horizon 30 days"}, drivers: {static: true, keys: ["driverId"]}, races: {time: "date", keys: ["raceId"]}},
+  event: {events: {time: "timestamp", keys: ["user", "event"], label: "target, horizon 7 days"}, users: {time_from: {table: "events", key: "user"}, keys: ["user"]}},
+  shop: {customers: {time: "created_at", keys: ["customer_id"]}, orders: {time: "ts", keys: ["order_id", "customer_id"]}, task: {time: "ts", keys: ["customer_id"], label: "label"}},
+};
+const ROLE = {time: ["row time", "r-time"], self_available: ["late", "r-self"], planned: ["planned", "r-plan"], unknown: ["unknown", "r-unk"], value_time: ["snapshot", "r-snap"]};
+let schemaMode = "heuristic";
+function drawSchema() {
+  const db = cur.db; $("#schemaDb").textContent = DBS[db].name.split(" ·")[0];
+  const tables = db === "olist" ? SCHEMA[schemaMode] : EXTRA_SCHEMAS[db];
+  $("#schemaMode").style.visibility = db === "olist" ? "visible" : "hidden";
+  const grid = $("#schemaGrid"); grid.innerHTML = "";
+  for (const [name, t] of Object.entries(tables)) {
+    const items = [];
+    if (t.time) items.push([t.time, ROLE.time]);
+    if (t.time_from) items.push([`← ${t.time_from.table}.${t.time_from.key}`, ["inherits time", "r-time"]]);
+    for (const r of ["self_available", "planned", "unknown"]) (t[r] || []).forEach(c => items.push([c, ROLE[r]]));
+    for (const c in (t.value_time || {})) items.push([c, ROLE.value_time]);
+    ((db === "olist" ? OLIST_KEYS[name] : t.keys) || []).forEach(k => items.push([k, ["key", ""]]));
+    if (t.label) items.push([t.label, ["label", ""]]);
+    const d = document.createElement("div"); d.className = "tbl"; d.dataset.name = name;
+    d.innerHTML = `<h4>${name}${t.static ? '<span class="chip">static</span>' : ""}</h4><ul>${items.map(i => `<li><span>${esc(i[0])}</span><span class="r ${i[1][1]}">${i[1][0]}</span></li>`).join("") || '<li><span class="r">no dated columns</span></li>'}</ul>`;
+    d.onclick = () => { $$(".tbl").forEach(x => x.classList.remove("sel")); d.classList.add("sel");
+      const why = db === "olist" && schemaMode === "llm" ? SCHEMA.reasons[name] : null;
+      $("#reason").innerHTML = `<h4>${name}</h4><p>${why ? esc(why) : db === "olist" ? "Rules only: the earliest date column is the row time, later date columns are known at their own value, text columns named like a status are unknown, tables without dates inherit time through a shared key. Switch to the LLM agent to see a reason per table." : "Declared in the schema that the check command points to."}</p>`; };
+    grid.append(d);
+  }
+  requestAnimationFrame(() => {
+    const svg = $("#wires"), wrap = $(".schema-wrap").getBoundingClientRect(); svg.setAttribute("viewBox", `0 0 ${wrap.width} ${wrap.height}`); svg.innerHTML = "";
+    for (const [name, t] of Object.entries(tables)) if (t.time_from) {
+      const a = grid.querySelector(`[data-name="${name}"]`), b = grid.querySelector(`[data-name="${t.time_from.table}"]`); if (!a || !b) continue;
+      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      const x1 = ra.left + ra.width / 2 - wrap.left, y1 = ra.top - wrap.top + (ra.top > rb.top ? 0 : ra.height), x2 = rb.left + rb.width / 2 - wrap.left, y2 = rb.top - wrap.top + (ra.top > rb.top ? rb.height : 0);
+      svg.innerHTML += `<path d="M${x1} ${y1}C${x1} ${(y1 + y2) / 2},${x2} ${(y1 + y2) / 2},${x2} ${y2}"/>`;
+    }
+  });
+}
+$("#btnSchema").onclick = () => { $("#schema").classList.add("open"); drawSchema(); };
+$$("#schemaMode button").forEach(b => b.onclick = () => { $$("#schemaMode button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); schemaMode = b.dataset.mode; drawSchema(); });
+window.addEventListener("resize", () => { if ($("#schema").classList.contains("open")) drawSchema() });
+
+// ---------- start ----------
+// deep links for the video: ?ex=leaky&run=1  ?modal=about  ?modal=schema&mode=llm
+const q = new URLSearchParams(location.search), ex0 = EX.find(e => e.id === q.get("ex")) || EX[0];
+fillExamples(ex0.db, ex0.id);
+if (q.get("mode") === "llm") $$("#schemaMode button")[1].click();
+if (q.get("modal") === "about") $("#btnAbout").click();
+if (q.get("modal") === "schema") $("#btnSchema").click();
+if (q.get("run")) $("#run").click();
+</script>
+</body>
+</html>
