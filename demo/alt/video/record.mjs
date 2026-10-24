@@ -98,7 +98,7 @@ const scenes = {
 };
 
 fs.mkdirSync(OUT, {recursive: true});
-const ids = Object.keys(scenes).map(Number);
+const ids = (process.env.SCENES ? process.env.SCENES.split(",").map(Number) : Object.keys(scenes).map(Number));
 for (const id of ids) {
   const seconds = dur(id);
   const t0 = Date.now(); await startRec(id);
