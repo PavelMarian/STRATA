@@ -18,7 +18,7 @@
      "text": "The agent layer replaces every ID with a made-up one, twice. This script turns the IDs into numbers, so the two renamings disagree with each other. The output depends on the spelling of the ID, identity recall cannot be separated from that, and the answer is uncheckable."},
     {"id": 9, "shot": "database Shop, example 'A prediction table with customers who do not exist yet'; Run check; cursor on the red dates",
      "text": "The task table itself can leak. These three rows predict customers who only sign up later, and STRATA names each one."},
-    {"id": 10, "shot": "click What is STRATA?; scroll to the results table; click Download SKILL.md; toast appears",
+    {"id": 10, "shot": "click What is STRATA?; the project page opens; scroll to the Results table; click Download SKILL.md",
      "text": "On eight databases with known answers, STRATA catches all forty-three leaking code changes and flags none of the fifty-five harmless ones. Download the skill file, and your coding agent runs the check before it reports a score."}
   ]
 }

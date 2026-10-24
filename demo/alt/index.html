@@ -113,36 +113,6 @@ code, pre, .mono { font-family: var(--mono) }
 .sheet-body h3 { font: 700 17px var(--display); margin: 22px 0 8px }
 .sheet-body h3:first-child { margin-top: 0 }
 .sheet-body.about p, .sheet-body.about .lead { max-width: none }
-/* the project page inside the sheet */
-.sheet-body.about h1 { font: 800 26px/1.15 var(--display); margin: 0 0 8px }
-.sheet-body.about .lead { font-size: 16px; color: var(--muted); margin: 0 0 10px }
-.sheet-body.about .authors { font-size: 14px; margin: 0 0 14px } .sheet-body.about .authors span { color: var(--muted) }
-.sheet-body.about .cta, .sheet-body.about p:has(> a.cta) { display: none }
-.sheet-body.about .links { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; margin: 0 0 18px; align-items: center }
-.sheet-body.about .links button { font: inherit; color: var(--accent); background: none; border: 1px solid var(--accent); border-radius: 8px; padding: 3px 10px }
-.sheet-body.about figure { margin: 0 0 18px; background: #fff; border-radius: 10px; padding: 8px }
-.sheet-body.about figure img { width: 100%; height: auto; display: block; border-radius: 6px }
-.sheet-body.about figcaption { color: var(--muted); font-size: 12.5px; margin-top: 6px }
-.sheet-body.about h2 { font: 700 17px var(--display); margin: 20px 0 6px }
-.sheet-body.about p { margin: 6px 0 }
-.sheet-body.about pre { background: var(--bg); border-radius: 8px; padding: 10px 12px; overflow: auto; font: 12.5px/1.5 var(--mono) }
-.sheet-body.about code { font-family: var(--mono); font-size: .92em }
-.sheet-body.about .rule { font: 600 22px/1.3 var(--display); text-align: center; padding: 12px; margin: 8px 0 } .sheet-body.about .rule span { color: var(--accent) }
-.sheet-body.about table.results td:first-child { width: 34%; font-weight: 500 } .sheet-body.about table.results td:first-child small { display: block; color: var(--muted); font-weight: 400 }
-.sheet-body.about .verd { font-weight: 600; font-family: var(--mono) } .sheet-body.about .v-leak { color: var(--leak) } .sheet-body.about .v-clean { color: var(--clean) } .sheet-body.about .v-unk { color: var(--unk) }
-.sheet-body.about table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 6px 0 }
-.sheet-body.about th, .sheet-body.about td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top }
-.sheet-body.about th { color: var(--muted); font-weight: 500 } .sheet-body.about td b { font-family: var(--mono); font-weight: 500; color: var(--accent) }
-.sheet-body.about .tl { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; margin: 10px 0 }
-.sheet-body.about .tl .ctl { display: block; font-size: 13px; color: var(--muted) } .sheet-body.about .tl .ctl span { font-family: var(--mono); color: var(--ink) }
-.sheet-body.about .tl input[type=range] { width: 100%; accent-color: var(--accent); margin: 6px 0 8px }
-.sheet-body.about .tl svg text { font: 11px var(--mono); fill: var(--muted) }
-.sheet-body.about .tl .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--muted) }
-.sheet-body.about .tl .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle }
-.sheet-body.about .tlpanel { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; align-self: start }
-.sheet-body.about .tlpanel td.diffcell { color: var(--leak); font-weight: 600 } .sheet-body.about .tlpanel .small { font-size: 12.5px; color: var(--muted); margin: 8px 0 0 }
-.sheet-body.about .foot { color: var(--muted); font-size: 12.5px; margin-top: 20px; border-top: 1px solid var(--line); padding-top: 10px }
-
 /* schema viewer */
 .schema-wrap { position: relative }
 .schema-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 46px 34px; position: relative; z-index: 1 }
@@ -180,7 +150,7 @@ code, pre, .mono { font-family: var(--mono) }
   <button class="primary" id="run">▶ Run check</button>
   <div class="spacer"></div>
   <button class="ghost" id="btnSchema">Schema</button>
-  <button class="ghost" id="btnAbout">What is STRATA?</button>
+  <a href="about.html" class="ghost" id="btnAbout" style="border:1px solid var(--line);border-radius:8px;padding:6px 12px;color:var(--ink)">What is STRATA?</a>
   <button id="btnSkill">Download skill</button>
   <span class="links"><a href="#" id="lnkRepo">GitHub</a><a href="#" id="lnkPaper">Paper</a></span>
 </header>
@@ -196,12 +166,6 @@ code, pre, .mono { font-family: var(--mono) }
   </aside>
 </main>
 
-<!-- What is STRATA? : the project page (about.html) loaded into a sheet -->
-<div class="modal" id="about"><div class="sheet">
-  <div class="sheet-head"><h2>What is STRATA?</h2><span class="spacer" style="flex:1"></span><a href="about.html" style="font-size:13px;margin-right:14px">Open as a page</a><button class="ghost" data-close>Close</button></div>
-  <div class="sheet-body about" id="aboutBody"><p style="color:var(--muted)">Loading…</p></div>
-</div></div>
-
 <!-- Schema viewer -->
 <div class="modal" id="schema"><div class="sheet">
   <div class="sheet-head"><h2>Availability schema: <span id="schemaDb">Olist</span></h2>
@@ -215,7 +179,6 @@ code, pre, .mono { font-family: var(--mono) }
 </div></div>
 
 <script src="data.js"></script>
-<script src="timeline.js"></script>
 <script>
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
@@ -383,18 +346,6 @@ $("#run").onclick = async () => {
 $$("[data-close]").forEach(b => b.onclick = () => b.closest(".modal").classList.remove("open"));
 $$(".modal").forEach(m => m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open") }));
 document.addEventListener("keydown", e => { if (e.key === "Escape") $$(".modal.open").forEach(m => m.classList.remove("open")) });
-let aboutLoaded = false;
-$("#btnAbout").onclick = async () => {
-  $("#about").classList.add("open"); if (aboutLoaded) return;
-  try {
-    const html = await (await fetch("about.html")).text();
-    const main = new DOMParser().parseFromString(html, "text/html").querySelector("main");
-    $("#aboutBody").innerHTML = main.innerHTML; aboutLoaded = true;
-    $$("#aboutBody [data-skill]").forEach(b => b.onclick = dl);
-    initTimeline($("#aboutBody"));
-    const m = {"#aboutBody #repo": "#lnkRepo", "#aboutBody #paper": "#lnkPaper"}; for (const k in m) { const a = $(k), src = $(m[k]); if (a && src) a.href = src.href; }
-  } catch (e) { $("#aboutBody").innerHTML = '<p>The project page could not be loaded here. <a href="about.html">Open it as a page.</a></p>'; }
-};
 const dl = () => { try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([SKILL], {type: "text/markdown"})); a.download = "SKILL.md"; document.body.appendChild(a); a.click(); a.remove(); toast("SKILL.md downloaded") } catch (e) { toast("Download is blocked here") } };
 $("#btnSkill").onclick = dl;
 
@@ -441,11 +392,10 @@ $$("#schemaMode button").forEach(b => b.onclick = () => { $$("#schemaMode button
 window.addEventListener("resize", () => { if ($("#schema").classList.contains("open")) drawSchema() });
 
 // ---------- start ----------
-// deep links for the video: ?ex=leaky&run=1  ?modal=about  ?modal=schema&mode=llm
+// deep links for the video: ?ex=leaky&run=1  ?modal=schema&mode=llm
 const q = new URLSearchParams(location.search), ex0 = EX.find(e => e.id === q.get("ex")) || EX[0];
 fillExamples(ex0.db, ex0.id);
 if (q.get("mode") === "llm") $$("#schemaMode button")[1].click();
-if (q.get("modal") === "about") $("#btnAbout").click();
 if (q.get("modal") === "schema") $("#btnSchema").click();
 if (q.get("run")) $("#run").click();
 </script>

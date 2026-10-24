@@ -9,7 +9,7 @@
 | Файл | Что это |
 |---|---|
 | `demo/alt/about.html` | проектная страница в формате вопросов и ответов, большая кнопка «Open the demo», ссылки на код, статью, видео, PITBench, скилл |
-| `demo/alt/index.html` | рабочий стол: база, пример, «Run check», «Schema», «What is STRATA?», «Download skill» |
+| `demo/alt/index.html` | рабочий стол: база, пример, «Run check», «Schema», «Download skill», тумблер Recorded/Live, ссылка на проектную страницу |
 | `demo/alt/data.js` | записанные прогоны, программы, схема Olist с обоснованиями LLM, предсказания модели и агента, таблица PITBench, текст SKILL.md |
 | `demo/alt/scenes.json` | текст сцен для озвучки в формате скилла `video-voiceover` |
 | `demo/alt/live.html`, `live_glue.py`, `data/olist/` | живой запуск: модель по ключу OpenRouter пишет программу или схему по редактируемому промпту, проверка STRATA идёт в браузере (Pyodide) на выборке из 3000 заказов Olist; страницу открывать с сервера от корня репо |
@@ -28,8 +28,7 @@
 
 Глубокие ссылки для записи и отладки: `index.html?ex=leaky&run=1`,
 `?ex=fixed&run=1`, `?ex=status&run=1`, `?ex=model&run=1`, `?ex=agent&run=1`,
-`?ex=agent_hashed&run=1`, `?ex=task&run=1`, `?modal=about`,
-`?modal=schema&mode=llm`.
+`?ex=agent_hashed&run=1`, `?ex=task&run=1`, `?modal=schema&mode=llm`.
 
 ## Что ждёт трек
 
@@ -88,7 +87,7 @@
 > The task table itself can leak. These three rows predict customers who only sign up later, and STRATA names each one.
 
 ### 10. Результаты и скилл (2:32–2:52)
-**Действие:** клик «What is STRATA?». Прокрутить до таблицы результатов. Клик «Download SKILL.md», всплывает подтверждение. Конец.
+**Действие:** клик «What is STRATA?», открывается проектная страница. Прокрутить до таблицы «Results». Клик «Download SKILL.md». Конец.
 > On eight databases with known answers, STRATA catches all forty-three leaking code changes and flags none of the fifty-five harmless ones. Download the skill file, and your coding agent runs the check before it reports a score.
 
 Если запись выходит длиннее 3:30, убрать сцены 8 и 9.

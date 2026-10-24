@@ -82,7 +82,7 @@ details { margin-top: 8px } summary { cursor: pointer; color: var(--muted); font
   <select id="model" style="max-width:300px"><option value="anthropic/claude-opus-5.5">anthropic/claude-opus-5.5</option></select>
   <input id="modelFree" placeholder="or any OpenRouter model id" style="width:220px">
   <div class="spacer"></div>
-  <span class="links"><a href="#" id="btnAbout">What is STRATA?</a></span>
+  <span class="links"><a href="about.html">What is STRATA?</a></span>
 </header>
 <div class="status" id="status">Loading the Python runtime…</div>
 
@@ -125,8 +125,6 @@ details { margin-top: 8px } summary { cursor: pointer; color: var(--muted); font
   </section>
   <section class="pane" id="out-schema"><div class="empty">Press <b>Draft the schema</b>.</div></section>
 </main>
-
-<div id="about" style="position:fixed;inset:0;background:rgba(5,8,12,.7);display:none;align-items:center;justify-content:center;z-index:20;padding:24px"><div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(1000px,100%);max-height:100%;overflow:auto;padding:18px 22px"><div style="text-align:right"><button class="ghost" id="aboutClose">Close</button></div><div id="aboutBody"></div></div></div>
 
 <script src="data.js"></script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
@@ -267,12 +265,6 @@ $("#draft").onclick = async () => {
   } catch (e) { out.insertAdjacentHTML("beforeend", `<div class="card">${V("ERROR")}<pre class="term" style="margin-top:8px">${esc(String(e.message || e)).slice(0, 2000)}</pre></div>`); }
   $("#draft").disabled = false;
 };
-
-// ---------- what is STRATA ----------
-$("#btnAbout").onclick = async e => { e.preventDefault(); const m = $("#about"); m.style.display = "flex"; if ($("#aboutBody").innerHTML) return;
-  try { const html = await (await fetch("about.html")).text(); $("#aboutBody").innerHTML = new DOMParser().parseFromString(html, "text/html").querySelector("main").innerHTML; $$("#aboutBody .cta").forEach(x => x.remove()); } catch (e) { $("#aboutBody").innerHTML = '<a href="about.html">Project page</a>'; } };
-$("#aboutClose").onclick = () => $("#about").style.display = "none";
-$("#about").addEventListener("click", e => { if (e.target === $("#about")) $("#about").style.display = "none" });
 
 // deep links: ?example=leaky&run=1
 const q = new URLSearchParams(location.search);
