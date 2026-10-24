@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>STRATA</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap">
+<style>
+/* Layout: one long product page. A sticky top bar with section links; each
+   section has one plain heading that says what the block shows, a short
+   explanation, and a working piece of the tool next to it. */
+:root {
+  --bg: #f3f5f8; --band: #e9edf3; --panel: #ffffff; --ink: #1b2330; --muted: #5d6878; --line: #d6dbe2;
+  --accent: #2b5a9e; --accent-ink: #ffffff; --code-bg: #f6f7f9;
+  --term-bg: #121821; --term-ink: #d5dde8; --term-dim: #7f8ea3; --term-cmd: #9cc3f5;
+  --leak: #c2372b; --leak-bg: #fbe9e7; --clean: #1f7a4a; --clean-bg: #e4f3ea; --unk: #9a6400; --unk-bg: #fbf0d9;
+  --t-leak: #ff8a7f; --t-clean: #74d69d; --t-unk: #f3c46b;
+  --add-bg: #dff1e5; --del-bg: #fbe4e1;
+  --tk-kw: #8a3ffc; --tk-str: #1f7a4a; --tk-com: #8792a2; --tk-num: #b45309; --tk-fn: #2b5a9e;
+  --l1: #2b5a9e; --l2: #3f7cbf; --l3: #6f9bd1; --l4: #a7c1e6; --l5: #d4e1f3;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f141b; --band: #131a23; --panel: #161d26; --ink: #e3e8ef; --muted: #98a4b5; --line: #2a3442;
+  --accent: #6d9fe0; --accent-ink: #0b1220; --code-bg: #121820; --term-bg: #0a0e14;
+  --leak: #f0776b; --leak-bg: #3a1d1b; --clean: #5cc58c; --clean-bg: #15301f; --unk: #e4b45a; --unk-bg: #352a14;
+  --add-bg: #173323; --del-bg: #3b1c1a;
+  --tk-kw: #c4a3ff; --tk-str: #7fd3a1; --tk-com: #6f7d91; --tk-num: #f2b46b; --tk-fn: #8fb8ec;
+  --l1: #6d9fe0; --l2: #5a88c4; --l3: #46709f; --l4: #33557a; --l5: #243c57; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0f141b; --band: #131a23; --panel: #161d26; --ink: #e3e8ef; --muted: #98a4b5; --line: #2a3442;
+  --accent: #6d9fe0; --accent-ink: #0b1220; --code-bg: #121820; --term-bg: #0a0e14;
+  --leak: #f0776b; --leak-bg: #3a1d1b; --clean: #5cc58c; --clean-bg: #15301f; --unk: #e4b45a; --unk-bg: #352a14;
+  --add-bg: #173323; --del-bg: #3b1c1a;
+  --tk-kw: #c4a3ff; --tk-str: #7fd3a1; --tk-com: #6f7d91; --tk-num: #f2b46b; --tk-fn: #8fb8ec;
+  --l1: #6d9fe0; --l2: #5a88c4; --l3: #46709f; --l4: #33557a; --l5: #243c57; color-scheme: dark }
+
+* { box-sizing: border-box }
+[hidden] { display: none !important }
+html { scroll-behavior: smooth; scroll-padding-top: 70px }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 var(--font-ui) }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel) }
+.pad { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+.inner { max-width: 1180px; margin: 0 auto }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+.mono, code { font-family: var(--font-mono); font-size: .92em; font-variant-ligatures: none }
+
+/* top bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line) }
+.bar .inner { display: flex; align-items: center; gap: 8px 18px; flex-wrap: wrap; padding-block: 9px }
+.brand { display: flex; align-items: center; gap: 9px; color: var(--ink); text-decoration: none }
+.brand b { font: 800 19px/1 var(--font-display); letter-spacing: .02em }
+.logo { width: 22px; height: 22px; display: grid; grid-template-rows: repeat(5, 1fr); gap: 1.5px }
+.logo i { display: block; border-radius: 1px }
+.logo i:nth-child(1) { background: var(--l1) } .logo i:nth-child(2) { background: var(--l2); margin-left: 3px }
+.logo i:nth-child(3) { background: var(--l3); margin-right: 4px } .logo i:nth-child(4) { background: var(--l4); margin-left: 2px }
+.logo i:nth-child(5) { background: var(--l5) }
+.links { display: flex; gap: 4px 14px; flex-wrap: wrap }
+.links a { color: var(--muted); text-decoration: none; font: 500 13.5px/1 var(--font-ui); padding: 6px 1px; border-bottom: 2px solid transparent }
+.links a.on { color: var(--ink); border-bottom-color: var(--accent) }
+.spacer { flex: 1 }
+
+button, select { font: 500 14px/1 var(--font-ui); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; cursor: pointer }
+button:hover, select:hover { border-color: var(--accent) }
+button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent) }
+.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600 }
+.primary:disabled { opacity: .55; cursor: progress }
+.seg { display: inline-flex; flex-wrap: wrap; gap: 6px }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+
+/* sections */
+header.hero { padding-block: 64px 54px; border-bottom: 1px solid var(--line) }
+section { padding-block: 60px 54px; border-bottom: 1px solid var(--line) }
+section:nth-of-type(odd) { background: var(--band) }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; line-height: 1.12; text-wrap: balance }
+h1 { font-size: clamp(36px, 5.6vw, 66px); font-weight: 800; max-width: 20ch }
+h2 { font-size: clamp(24px, 3vw, 36px); font-weight: 800; max-width: 30ch }
+h3 { font: 600 17px/1.3 var(--font-ui) }
+.n { font: 500 .9em var(--font-mono); color: var(--muted); margin-right: 8px }
+h2 .n { font-size: .55em; vertical-align: .35em }
+p { margin: 0 }
+.lede { font-size: clamp(16.5px, 1.6vw, 19px); color: var(--muted); max-width: 66ch }
+.head { display: grid; gap: 12px; margin-bottom: 28px }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px }
+.grid2 > *, .stack > * { min-width: 0 }
+.stack { display: grid; gap: 14px; align-content: start }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px }
+.hero .term { margin-top: 26px; max-width: 900px }
+.cap { font: 600 11.5px/1.3 var(--font-ui); color: var(--muted); letter-spacing: .08em; text-transform: uppercase }
+.small { font-size: 13.5px; color: var(--muted) }
+.note { border-left: 3px solid var(--accent); padding: 10px 14px; background: var(--panel); border-radius: 0 8px 8px 0; font-size: 15px }
+.note.unk { border-left-color: var(--unk); background: var(--unk-bg) }
+
+.verdict { display: inline-flex; align-items: center; gap: 7px; font: 600 12.5px/1 var(--font-mono); letter-spacing: .04em }
+.verdict::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: currentColor; flex: none }
+.v-LEAK { color: var(--leak) } .v-CLEAN { color: var(--clean) } .v-UNCHECKABLE { color: var(--unk) } .v-ERROR { color: var(--muted) }
+
+/* layers + principle */
+.layers { display: grid; gap: 6px }
+.layer { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 14px; align-items: baseline; padding: 10px 14px; border-radius: 6px }
+.layer:nth-child(1) { background: color-mix(in srgb, var(--l1) 18%, var(--panel)) } .layer:nth-child(2) { background: color-mix(in srgb, var(--l2) 15%, var(--panel)) }
+.layer:nth-child(3) { background: color-mix(in srgb, var(--l3) 13%, var(--panel)) } .layer:nth-child(4) { background: color-mix(in srgb, var(--l4) 14%, var(--panel)) }
+.layer:nth-child(5) { background: color-mix(in srgb, var(--l5) 22%, var(--panel)) }
+.layer b { font: 600 14px var(--font-mono) }
+.formula { font: 500 clamp(15px, 1.9vw, 20px)/1.5 var(--font-mono); padding: 14px 16px; border-left: 4px solid var(--accent); background: var(--panel); border-radius: 0 8px 8px 0; overflow-x: auto; white-space: nowrap }
+
+/* terminal + code */
+.term { background: var(--term-bg); color: var(--term-ink); border-radius: 8px; font: 12.5px/1.55 var(--font-mono); font-variant-ligatures: none;
+  padding: 12px 14px; overflow: auto; max-height: 360px; white-space: pre-wrap; word-break: break-word }
+.term .cmd { color: var(--term-cmd) } .term .cmd::before { content: "$ "; color: var(--term-dim) }
+.term .dim { color: var(--term-dim) }
+.term .caret { display: inline-block; width: 8px; height: 1.05em; background: var(--term-ink); vertical-align: text-bottom; animation: blink 1.1s steps(1) infinite }
+@keyframes blink { 50% { opacity: 0 } }
+.term .LEAK { color: var(--t-leak); font-weight: 500 } .term .CLEAN { color: var(--t-clean); font-weight: 500 } .term .UNCHECKABLE, .term .ERROR { color: var(--t-unk); font-weight: 500 }
+.code { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; font: 12.5px/20px var(--font-mono); font-variant-ligatures: none; overflow: auto; max-height: 520px }
+.code .ln { display: grid; grid-template-columns: 40px max-content; white-space: pre }
+.code .ln i { font-style: normal; color: var(--muted); text-align: right; padding-right: 10px; user-select: none; background: var(--panel); border-right: 1px solid var(--line) }
+.code .ln > span { padding: 0 12px }
+.code .ln.wit > span { background: var(--leak-bg) } .code .ln.add > span { background: var(--add-bg) } .code .ln.unk > span { background: var(--unk-bg) }
+.tk-kw { color: var(--tk-kw) } .tk-str { color: var(--tk-str) } .tk-com { color: var(--tk-com); font-style: italic } .tk-num { color: var(--tk-num) } .tk-fn { color: var(--tk-fn) }
+.tab { font: 500 12.5px var(--font-mono); padding: 3px 9px; border-radius: 5px; background: var(--code-bg); border: 1px solid var(--line) }
+
+/* diagnosis card */
+.card { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--panel) }
+.card-h { display: flex; align-items: center; gap: 8px; padding: 8px 12px; flex-wrap: wrap }
+.card.LEAK .card-h { background: var(--leak-bg) } .card.CLEAN .card-h { background: var(--clean-bg) } .card.UNCHECKABLE .card-h { background: var(--unk-bg) }
+.card-h b { font-weight: 600 } .card-h .meta { margin-left: auto; font-size: 12.5px; color: var(--muted) }
+.card-b { padding: 10px 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; font-size: 14px }
+.card-b > * { min-width: 0 }
+.diff { font: 12px/18px var(--font-mono); background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; overflow-x: auto; padding: 6px 0 }
+.diff div { white-space: pre; padding: 0 10px } .diff .a { background: var(--add-bg) } .diff .d { background: var(--del-bg) } .diff .c { color: var(--muted) }
+.empty { color: var(--muted); font-size: 14px; padding: 14px; border: 1px dashed var(--line); border-radius: 8px }
+
+/* tables */
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums }
+th, td { text-align: right; padding: 6px 9px; border-bottom: 1px solid var(--line); vertical-align: top }
+th:first-child, td:first-child { text-align: left }
+th { font: 600 11.5px/1.3 var(--font-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--muted) }
+td.mono { font-family: var(--font-mono); font-size: 12.5px }
+.tablebox { overflow-x: auto }
+.good { color: var(--clean); font-weight: 600 } .bad { color: var(--leak); font-weight: 600 } .warn { color: var(--unk); font-weight: 600 }
+.diffcell { background: var(--leak-bg) }
+
+/* timeline + charts */
+svg text { fill: var(--muted); font: 500 11px var(--font-mono) }
+.chartbox { overflow-x: auto }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted) }
+.sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle }
+label.ctl { font: 500 13px/1.3 var(--font-ui); color: var(--muted); display: grid; gap: 6px }
+input[type=range] { width: 100%; accent-color: var(--accent) }
+
+/* schema */
+.tables { display: flex; flex-wrap: wrap; gap: 6px }
+.tables button { font: 500 13px/1 var(--font-mono) }
+dl.dec { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 14px; margin: 0; font-size: 14px }
+dl.dec dt { color: var(--muted); font-size: 13px } dl.dec dd { margin: 0; font-family: var(--font-mono); font-size: 13px; word-break: break-word }
+
+/* detectors + changes */
+.dets { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 8px; margin-bottom: 14px }
+.det { text-align: left; display: grid; gap: 4px; padding: 10px 12px; line-height: 1.35 }
+.det b { font-weight: 600; font-size: 14px } .det span { font-size: 12.5px; color: var(--muted); font-weight: 400 }
+.det[aria-pressed="true"] span { color: inherit; opacity: .85 }
+.mut { display: grid; gap: 6px; max-height: 440px; overflow: auto }
+.mut .m { display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px }
+.mut .m code { font-size: 12px; line-height: 1.45; word-break: break-word }
+.mut .m del { color: var(--leak); text-decoration: none } .mut .m ins { color: var(--clean); text-decoration: none }
+details.sub { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 18px }
+details.sub summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 10px }
+details.sub summary::-webkit-details-marker { display: none }
+details.sub summary::after { content: "show"; font: 500 13px var(--font-ui); color: var(--accent); margin-left: auto }
+details.sub[open] summary::after { content: "hide" }
+details.sub .lede { margin: 12px 0 18px }
+table.plain td { text-align: left }
+
+footer { padding-block: 30px; color: var(--muted); font-size: 13.5px }
+.toast { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--panel); padding: 7px 14px; border-radius: 6px; font-size: 14px; z-index: 30 }
+
+@media (max-width: 860px) {
+  .grid2 { grid-template-columns: minmax(0, 1fr) }
+  .layer, .mut .m { grid-template-columns: minmax(0, 1fr) }
+  .links { display: none }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto } .term .caret { animation: none } }
+</style>
+</head>
+<body>
+
+<div class="bar pad"><div class="inner">
+  <a class="brand" href="#top"><span class="logo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><b>STRATA</b></a>
+  <nav class="links" aria-label="Sections">
+    <a href="#layers">Layers</a><a href="#time">Time</a><a href="#schema">Schema</a><a href="#features">Features</a>
+    <a href="#model">Model</a><a href="#identity">Identity</a><a href="#results">Results</a>
+  </nav>
+  <span class="spacer"></span>
+  <button type="button" id="skillTop">Download skill</button>
+</div></div>
+
+<header class="hero pad" id="top"><div class="inner">
+  <h1>Point-in-time checks for ML pipelines</h1>
+  <p class="lede" style="margin-top:18px">Coding agents write whole ML pipelines over relational data. The code runs, the tests pass, the score looks good. A model built to predict what happens after a date <i>t</i> can still use facts that appeared after <i>t</i>. STRATA runs each layer of the pipeline on the data as it is and on the data as it was at <i>t</i>. A difference in the output is a leak, and STRATA names the time, the entity, the column and the table it came from.</p>
+  <div class="term" id="heroTerm"></div>
+</div></header>
+
+<section id="layers" class="pad"><div class="inner">
+  <div class="head"><h2><span class="n">1</span>Five layers, one rule</h2></div>
+  <div class="grid2">
+    <div class="layers">
+      <div class="layer"><b>task</b><span>who is in the prediction table at <i>t</i>, and whether labels are complete when they are used</span></div>
+      <div class="layer"><b>features</b><span>rows created after <i>t</i>, dates filled in later, values overwritten at the end of the data</span></div>
+      <div class="layer"><b>model</b><span>training rows whose outcome was not known yet at <i>t</i></span></div>
+      <div class="layer"><b>in-context</b><span>few-shot examples for an LLM taken from after <i>t</i></span></div>
+      <div class="layer"><b>agent</b><span>a model that already knows the entity from outside the data</span></div>
+    </div>
+    <div class="stack">
+      <p class="lede">A check of one layer passes a pipeline that leaks in another. Agent-written training scripts often cut their features correctly and still train on outcomes from the future. STRATA checks all five layers with one rule and never reads the code:</p>
+      <div class="formula">output on D  =  output on D as of t</div>
+      <p class="lede">D as of <i>t</i> is the database at that moment: rows that did not exist yet are removed, and values that were filled in later are empty.</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="time" class="pad"><div class="inner">
+  <div class="head"><h2><span class="n">2</span>The prediction time t</h2>
+    <p class="lede">One Olist product, its orders and the reviews of those orders. A feature program that counts reviews of past orders without checking when each review was written also counts reviews from after <i>t</i>. Drag <i>t</i> to see when that happens.</p></div>
+  <div class="grid2">
+    <div class="stack">
+      <h3><span class="n">2.1</span>Orders and reviews of one product</h3>
+      <label class="ctl" for="tSlider">Prediction time t: <span id="tLabel" class="mono" style="color:var(--ink)"></span>
+        <input id="tSlider" type="range" min="0" max="100" value="30"></label>
+      <div class="chartbox"><svg id="timeline" viewBox="0 0 640 230" width="100%" role="img" aria-label="Orders and reviews over time"></svg></div>
+      <div class="legend"><span><span class="sw" style="background:var(--accent)"></span>order placed before t</span><span><span class="sw" style="background:var(--unk)"></span>review written by t</span><span><span class="sw" style="background:var(--leak)"></span>review of a past order, written after t</span></div>
+    </div>
+    <div class="stack">
+      <h3><span class="n">2.2</span>Feature values at this t</h3>
+      <div class="panel stack">
+        <div class="row"><span id="tVerdict" class="verdict"></span></div>
+        <table><thead><tr><th>Feature</th><th>Full data</th><th>Data as of t</th></tr></thead><tbody id="tTable"></tbody></table>
+        <p class="small" id="tNote"></p>
+      </div>
+      <p class="small">Product <span class="mono" id="tProduct"></span>, computed from its real rows. STRATA reports this product as the witness for the program in the features section below.</p>
+    </div>
+  </div>
+</div></section>
+
+<section id="schema" class="pad"><div class="inner">
+  <div class="head"><h2><span class="n">3</span>The availability schema</h2>
+    <p class="lede">STRATA does not know your database in advance. It needs a short schema that says, for every table, which column gives the time a row appears and which values arrive later. <span class="mono">strata init</span> drafts this schema from the raw files.</p>
+    <p class="lede">Rules based on column names and dates find most of it. They miss columns that are overwritten with the latest value, like an order status that always shows the final state. An optional LLM agent reads a profile of the data and proposes each decision with a reason. STRATA tests every decision against the data and a person confirms the result.</p></div>
+  <div class="grid2">
+    <div class="stack">
+      <h3><span class="n">3.1</span>Drafted schema, table by table</h3>
+      <div class="seg" role="group" aria-label="Draft"><button type="button" data-draft="heuristic">Rules only</button><button type="button" data-draft="llm" aria-pressed="true">With the LLM agent</button></div>
+      <div class="tables" id="schemaTables"></div>
+      <div class="panel stack"><dl class="dec" id="schemaDec"></dl><p class="small" id="schemaReason"></p></div>
+    </div>
+    <div class="stack">
+      <h3><span class="n">3.2</span>What the draft leaves open</h3>
+      <div class="note unk">Does a review exist from the day the survey is sent (<span class="mono">review_creation_date</span>) or only from the moment the customer answers it (<span class="mono">review_answer_timestamp</span>)? The agent chose the answer time, because the score does not exist before the answer. The other choice is also defensible, so the person who knows the data decides.</div>
+      <h3><span class="n">3.3</span>Run of strata init on the raw Olist files</h3>
+      <div id="t-init"></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="features" class="pad"><div class="inner">
+  <div class="head"><h2><span class="n">4</span>The feature check</h2>
+    <p class="lede">A code model wrote this feature program for an Olist demand task. Run the check: STRATA finds the leak, names the table it came from and suggests a fix. Apply the fix and run the check again.</p></div>
+  <div class="row" style="margin-bottom:14px">
+    <div class="seg" role="group" aria-label="Program"><button type="button" data-prog="leak" aria-pressed="true">Program written by a code model</button><button type="button" data-prog="status">Program that reads order_status</button></div>
+    <span class="spacer"></span>
+    <button type="button" class="primary" id="runFeat">▶ Run check</button>
+  </div>
+  <div class="grid2">
+    <div class="stack">
+      <h3><span class="n">4.1</span>Program under test</h3>
+      <div class="row"><span class="tab" id="fname">features.py</span><span class="small" id="fstate">as written</span></div>
+      <div class="code" id="progCode"></div>
+    </div>
+    <div class="stack">
+      <h3><span class="n">4.2</span>Verdict and witness</h3>
+      <div id="diag"><div class="empty">Press “Run check”. STRATA runs the program on the full database and on the database as of each prediction time, then on a copy with a changed future (the canary), and compares the results.</div></div>
+      <div class="term" id="featTerm"><span class="idle"><span class="cmd"></span><span class="caret"></span></span></div>
+    </div>
+  </div>
+  <details class="sub" id="task">
+    <summary><h3><span class="n">4.3</span>Can the task table itself leak?</h3></summary>
+    <p class="lede">Yes. Before any feature is computed, the task table decides which customers are predicted at which date. A row for a customer who signs up later tells the model that this customer will exist, and that is a fact from the future. STRATA compares every task row with the customer's creation date from the schema. It also checks that labels use only events up to the end of their prediction window.</p>
+    <div class="grid2">
+      <div class="tablebox panel"><table><thead><tr><th>Customer</th><th>Predicted at</th><th>Signed up</th></tr></thead><tbody id="taskRows"></tbody></table></div>
+      <div id="t-task"></div>
+    </div>
+  </details>
+</div></section>
+
+<section id="model" class="pad"><div class="inner">
+  <div class="head"><h2><span class="n">5</span>The model check</h2>
+    <p class="lede">RelBench F1 task: for each Formula 1 driver, predict whether they qualify in the top 3 of a race in the next month. A coding agent wrote the training script. STRATA runs it twice at the prediction time 19 September 2001: once with only the races whose results were known by then, and once with the {N_AFTER} later results added. A correct script gives the same predictions both times.</p></div>
+  <div class="grid2">
+    <div class="stack">
+      <h3><span class="n">5.1</span>Predictions per driver, with and without later results</h3>
+      <div class="row"><div class="seg" role="group" aria-label="Sort"><button type="button" data-sort="shift" aria-pressed="true">Largest change first</button><button type="button" data-sort="driver">By driver</button></div><span class="small" id="modelAuc"></span></div>
+      <div class="chartbox"><svg id="dumbbell" width="100%" role="img" aria-label="Predicted probability per driver with and without later results"></svg></div>
+      <div class="legend"><span><span class="sw" style="background:var(--muted)"></span>prediction from results known at t</span><span><span class="sw" style="background:var(--leak)"></span>prediction with later results added</span><span>■ driver did qualify in the top 3</span></div>
+    </div>
+    <div class="stack">
+      <h3><span class="n">5.2</span>Run of strata check model</h3>
+      <div class="note">Each row is one driver. The further apart the two dots, the more the prediction depends on results that did not exist yet. With the later results the script scores much higher than it would in use, so a high score alone does not show that the script is correct.</div>
+      <div id="t-model"></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="identity" class="pad"><div class="inner">
+  <div class="head"><h2><span class="n">6</span>The identity check</h2>
+    <p class="lede">A pretrained model inside the pipeline, or an LLM that writes the predictions, may already know real drivers or users from public data, including what happened to them after <i>t</i>. STRATA replaces every ID with a made-up one and runs the script again. Nothing else changes: the rows, their order and which rows belong to one entity stay as they were. A script that learns only from the data gives the same predictions with real and with made-up IDs. A script whose predictions change took something from the real IDs.</p>
+    <p class="lede">STRATA uses two different renamings. If the predictions differ between the two renamings themselves, the script depends on how IDs are spelled, and recall of real entities cannot be separated from that. The verdict is then UNCHECKABLE.</p></div>
+  <div class="row" style="margin-bottom:14px">
+    <div class="seg" role="group" aria-label="Script"><button type="button" data-agent="learns_from_data" aria-pressed="true">Script A: F1 drivers</button><button type="button" data-agent="hashes_ids">Script B: Event users</button></div>
+    <span id="agentVerdict"></span>
+  </div>
+  <div class="grid2">
+    <div class="stack"><h3><span class="n">6.1</span>Predictions with real and made-up IDs</h3><div class="tablebox panel"><table><thead><tr><th>Real ID</th><th>Made-up ID</th><th>Prediction</th><th>Renaming 1</th><th>Renaming 2</th></tr></thead><tbody id="agentRows"></tbody></table></div></div>
+    <div class="stack"><h3><span class="n">6.2</span>Run of strata check agent</h3><p class="lede" id="agentText"></p><div id="t-agent"></div></div>
+  </div>
+</div></section>
+
+<section id="results" class="pad"><div class="inner">
+  <div class="head"><h2><span class="n">7</span>Results on eight databases</h2>
+    <p class="lede">PITBench gives eight databases with hand-made answers. For each database it has control programs whose verdict is known, and a correct reference pipeline. We changed one time comparison in that pipeline at a time, for example <span class="mono">&lt;=</span> into <span class="mono">&lt;</span> or a removed date filter. Each changed version was labelled by hand as a leak or as harmless. A good checker flags the leaks and leaves the harmless changes alone. Pick a simpler checker to see where it fails.</p></div>
+  <h3 style="margin-bottom:12px"><span class="n">7.1</span>Five checkers on the same programs</h3>
+  <div class="dets" role="group" aria-label="Checker">
+    <button type="button" class="det" data-det="strata" aria-pressed="true"><b>STRATA</b><span>all five parts, values stamped with the time they become known</span></button>
+    <button type="button" class="det" data-det="rows"><b>Cut rows at t</b><span>drop rows created after t, as feature frameworks do</span></button>
+    <button type="button" class="det" data-det="canary"><b>Also hide late dates</b><span>rows cut at t, later dates emptied, plus a canary</span></button>
+    <button type="button" class="det" data-det="feat"><b>Features only</b><span>checks the feature code and nothing else</span></button>
+    <button type="button" class="det" data-det="any"><b>Any change is a leak</b><span>flags every change in output, like a regression test</span></button>
+  </div>
+  <div class="tablebox panel"><table><thead><tr><th>Database</th><th>Domain</th><th>Rows</th><th>Leaking programs found</th><th>Correct programs flagged</th><th>Leaking changes caught</th><th>Harmless changes flagged</th></tr></thead><tbody id="pbRows"></tbody></table></div>
+  <p class="small" id="detNote" style="margin-top:10px"></p>
+  <div class="grid2" style="margin-top:30px">
+    <div class="stack">
+      <h3><span class="n">7.2</span>The changed pipelines</h3>
+      <div class="row"><label class="ctl" for="mutOp">Kind of change <select id="mutOp"></select></label><label class="ctl" for="mutTruth">Hand label <select id="mutTruth"><option value="all">all</option><option value="v">leaks</option><option value="h">harmless</option></select></label><label class="ctl" for="mutDs">Database <select id="mutDs"></select></label></div>
+      <p class="small" id="mutSummary"></p>
+      <div class="mut" id="mutList"></div>
+    </div>
+    <div class="stack">
+      <h3><span class="n">7.3</span>Kinds of change</h3>
+      <div class="panel"><table><tbody>
+        <tr><td class="mono">drop_cutoff</td><td style="text-align:left">removes a date filter, so later rows come in</td></tr>
+        <tr><td class="mono">future_offset</td><td style="text-align:left">moves a window past t</td></tr>
+        <tr><td class="mono">extend_horizon</td><td style="text-align:left">makes the label window longer than the task allows</td></tr>
+        <tr><td class="mono">boundary_shift</td><td style="text-align:left">turns &lt; into &lt;= or back</td></tr>
+        <tr><td class="mono">drop_lower_bound</td><td style="text-align:left">removes the start of a window, which only adds older rows</td></tr>
+      </tbody></table></div>
+      <p class="small">The same kind of change can be a leak in one place and harmless in another. A window moved past <i>t</i> is harmless if another filter still cuts at <i>t</i>. So the label comes from a person and the verdict from running the code.</p>
+    </div>
+  </div>
+  <div class="stack" style="margin-top:30px">
+    <h3><span class="n">7.4</span>Three more corpora</h3>
+    <div class="tablebox panel"><table class="plain"><thead><tr><th>Corpus</th><th>What ran</th><th>Outcome</th></tr></thead><tbody>
+      <tr><td>Olist, 134 feature programs written by two code models</td><td>feature check, next to a row-cut oracle written for Olist alone</td><td>62 of the oracle's 63 leaks confirmed; 16 leaks among the 71 programs the oracle passed; 20 of those 71 UNCHECKABLE, since they read order_status</td></tr>
+      <tr><td>RelBench, 27 training scripts written by a coding agent</td><td>model check and identity check, scripts unmodified</td><td>model check: LEAK in all 27; identity check: CLEAN in 19, UNCHECKABLE in 8</td></tr>
+      <tr><td>PITBench, schemas drafted from the raw files</td><td>strata init with rules only and with the LLM agent</td><td>overwritten columns caught: 5 of 50 by rules, 50 of 50 by the agent; leaking controls caught on the drafts: 23 of 25 and 25 of 25</td></tr>
+    </tbody></table></div>
+  </div>
+</div></section>
+
+<footer class="pad"><div class="inner">STRATA, AI Institute, ITMO University. Every terminal block on this page is a recorded run of the strata CLI on the real data.</div></footer>
+
+<script>
+const REC = {"init": {"cmd": "strata init --data PITFALL_olist_data --out /tmp/olist_schema.json", "stdout": "draft schema written to /tmp/olist_schema.json; review these decisions:\n  - olist_customers_dataset: ['customer_state'] look mutable without history -> unknown\n  - olist_order_items_dataset: only planned dates ['shipping_limit_date']; treated as known with the row\n  - olist_order_reviews_dataset: row time = review_creation_date (earliest date column); self-available = ['review_answer_timestamp']\n  - olist_orders_dataset: row time = order_purchase_timestamp (earliest date column); self-available = ['order_approved_at', 'order_delivered_carrier_date', 'order_delivered_customer_date']; planned dates known with the row = ['order_estimated_delivery_date']\n  - olist_orders_dataset: ['order_status'] look mutable without history -> unknown\n  - olist_sellers_dataset: ['seller_state'] look mutable without history -> unknown\n  - olist_customers_dataset: no date column; inherits row time from olist_orders_dataset via customer_id\n  - olist_order_items_dataset: no date column; inherits row time from olist_orders_dataset via order_id\n  - olist_order_payments_dataset: no date column; inherits row time from olist_orders_dataset via order_id\n  - olist_products_dataset: no date column and no link -> static reference table\n  - olist_sellers_dataset: no date column and no link -> static reference table\n  - entity olist_products_dataset.product_id: no creation time -> population check will be UNCHECKABLE\n  - entity olist_sellers_dataset.seller_id: no creation time -> population check will be UNCHECKABLE", "exit": 0, "seconds": 1.0}, "leak": {"cmd": "strata check features --schema strata/examples/olist/schema.json --program demo/strata/programs/leaky_features.py:get_features --entity product --times 2018-01-01,2018-04-01,2018-07-01", "stdout": "[features] demo/strata/programs/leaky_features.py:get_features: LEAK\n  t=2018-01-01 00:00:00 witness    LEAK columns=review_mean_score,review_count\n  t=2018-01-01 00:00:00 canary     LEAK columns=review_mean_score\n  t=2018-04-01 00:00:00 witness    LEAK columns=review_mean_score,review_count\n  t=2018-04-01 00:00:00 canary     LEAK columns=review_mean_score\n  t=2018-07-01 00:00:00 witness    LEAK columns=review_mean_score,review_count\n  t=2018-07-01 00:00:00 canary     LEAK columns=review_mean_score\n  witness: {\"time\": \"2018-01-01 00:00:00\", \"column\": \"review_mean_score\", \"row\": \"01da7f08d8327e0b4fab7edaa0c417a4\", \"full\": 3.75, \"at_t\": 3.6666666666666665, \"channels\": [\"reviews\"]}\n  witness: {\"time\": \"2018-01-01 00:00:00\", \"column\": \"review_count\", \"row\": \"01da7f08d8327e0b4fab7edaa0c417a4\", \"full\": 4, \"at_t\": 3, \"channels\": [\"reviews\"]}\n  witness: {\"time\": \"2018-04-01 00:00:00\", \"column\": \"review_mean_score\", \"row\": \"5ea3a4fc17bd1341eeea4716d481ccfa\", \"full\": 3.0, \"at_t\": 0.0, \"channels\": []}\n  witness: {\"time\": \"2018-04-01 00:00:00\", \"column\": \"review_count\", \"row\": \"5ea3a4fc17bd1341eeea4716d481ccfa\", \"full\": 1, \"at_t\": 0, \"channels\": []}\n  witness: {\"time\": \"2018-07-01 00:00:00\", \"column\": \"review_mean_score\", \"row\": \"1bfe62f326ac7bec0f5a83c10cfff228\", \"full\": 2.764705882352941, \"at_t\": 2.625, \"channels\": []}", "exit": 1, "seconds": 5.1}, "fixed": {"cmd": "strata check features --schema strata/examples/olist/schema.json --program demo/strata/programs/fixed_features.py:get_features --entity product --times 2018-01-01,2018-04-01,2018-07-01", "stdout": "[features] demo/strata/programs/fixed_features.py:get_features: CLEAN\n  t=2018-01-01 00:00:00 witness    CLEAN\n  t=2018-01-01 00:00:00 canary     CLEAN\n  t=2018-01-01 00:00:00 unknown    CLEAN\n  t=2018-04-01 00:00:00 witness    CLEAN\n  t=2018-04-01 00:00:00 canary     CLEAN\n  t=2018-04-01 00:00:00 unknown    CLEAN\n  t=2018-07-01 00:00:00 witness    CLEAN\n  t=2018-07-01 00:00:00 canary     CLEAN\n  t=2018-07-01 00:00:00 unknown    CLEAN", "exit": 0, "seconds": 4.1}, "status": {"cmd": "strata check features --schema strata/examples/olist/schema.json --program demo/strata/programs/status_features.py:get_features --entity product --n-entities 200 --times 2018-01-01,2018-04-01,2018-07-01", "stdout": "[features] demo/strata/programs/status_features.py:get_features: UNCHECKABLE\n  t=2018-01-01 00:00:00 witness    CLEAN\n  t=2018-01-01 00:00:00 canary     CLEAN\n  t=2018-01-01 00:00:00 unknown    UNCHECKABLE columns=num_orders,num_items,total_price,total_freight,avg_price,avg_freight\n  t=2018-04-01 00:00:00 witness    CLEAN\n  t=2018-04-01 00:00:00 canary     CLEAN\n  t=2018-04-01 00:00:00 unknown    UNCHECKABLE columns=num_orders,num_items,total_price,total_freight,avg_price,avg_freight\n  t=2018-07-01 00:00:00 witness    CLEAN\n  t=2018-07-01 00:00:00 canary     CLEAN\n  t=2018-07-01 00:00:00 unknown    UNCHECKABLE columns=num_orders,num_items,total_price,total_freight,avg_price,avg_freight\n  note: output depends on a column whose availability is unknown", "exit": 2, "seconds": 73.1}, "task": {"cmd": "strata check task --task demo/strata/data/shop/task.csv --time-col ts --entity-col customer_id --schema demo/strata/data/shop/schema.json --entity customer", "stdout": "[task] customer: LEAK\n  t=all population LEAK violations=3\n  witness: {\"entity\": 0, \"row_time\": \"2020-06-01 00:00:00\", \"created\": \"2020-06-19 00:00:00\"}\n  witness: {\"entity\": 9, \"row_time\": \"2020-06-01 00:00:00\", \"created\": \"2020-06-11 00:00:00\"}\n  witness: {\"entity\": 11, \"row_time\": \"2020-06-01 00:00:00\", \"created\": \"2020-07-01 00:00:00\"}", "exit": 1, "seconds": 0.5}, "model": {"cmd": "strata check model --data demo/strata/data/driver-top3_history.parquet --time-col date --entity-col driverId --target-col qualifying --horizon-days 30 --times 2001-09-19 --pred-col prediction --cmd \"python demo/strata/programs/agent_alpha_run1.py --task-dir {task_dir} --time-col {time_col} --entity-col {entity_col} --target-col {target_col} --split {split} --out {out}\"", "stdout": "[model] python demo/strata/programs/agent_alpha_run1.py --task-dir {task_dir} --time-col {time_col} --entity-col {entity_col} --target-col {target_col} --split {split} --out {out}: LEAK\n  t=2001-09-19 00:00:00 witness    LEAK max|Δ|=0.8714  AUC at t=0.711 full=0.930\n  witness: {\"time\": \"2001-09-19 00:00:00\", \"entity\": 30, \"score_at_t\": 0.0435996525500004, \"score_full\": 0.91503207352557, \"rows_after_t_added\": 412}", "exit": 1, "seconds": 5.7}, "agent": {"cmd": "strata check agent --data demo/strata/data/driver-top3_past.parquet --query demo/strata/data/driver-top3_query.parquet --time-col date --entity-col driverId --target-col qualifying --pred-col prediction --cmd \"python demo/strata/programs/agent_alpha_run1.py --task-dir {task_dir} --time-col {time_col} --entity-col {entity_col} --target-col {target_col} --split {split} --out {out}\"", "stdout": "[agent] python demo/strata/programs/agent_alpha_run1.py --task-dir {task_dir} --time-col {time_col} --entity-col {entity_col} --target-col {target_col} --split {split} --out {out}: CLEAN\n  t=- identity   CLEAN max|Δ|=0", "exit": 0, "seconds": 7.0}, "agent_hashed": {"cmd": "strata check agent --data demo/strata/data/user-ignore_past.parquet --query demo/strata/data/user-ignore_query.parquet --time-col timestamp --entity-col user --target-col target --pred-col prediction --cmd \"python demo/strata/programs/agent_alpha_run2.py --task-dir {task_dir} --time-col {time_col} --entity-col {entity_col} --target-col {target_col} --split {split} --out {out}\"", "stdout": "[agent] python demo/strata/programs/agent_alpha_run2.py --task-dir {task_dir} --time-col {time_col} --entity-col {entity_col} --target-col {target_col} --split {split} --out {out}: UNCHECKABLE\n  t=- identity   UNCHECKABLE max|Δ|=0.1248\n  note: output depends on how identities are spelled (e.g. hashed or numeric ID features); identity recall cannot be separated from that", "exit": 2, "seconds": 7.2}};
+const DATA = {"timeline": {"product": "01da7f08d8327e0b4fab7edaa0c417a4", "orders": [{"order": "1800f4a4", "ts": "2017-11-27 22:35:44"}, {"order": "217aad2f", "ts": "2018-03-23 11:37:58"}, {"order": "3054c6a8", "ts": "2018-03-28 13:54:39"}, {"order": "67a05eb1", "ts": "2018-04-09 21:52:45"}, {"order": "860f0c4f", "ts": "2017-12-04 14:15:47"}, {"order": "c63f4a1a", "ts": "2017-10-18 17:52:44"}, {"order": "c6b504c2", "ts": "2018-02-09 16:31:38"}, {"order": "f9618764", "ts": "2017-11-25 00:05:10"}], "reviews": [{"order": "67a05eb1", "score": 5, "created": "2018-04-25 00:00:00", "answered": "2018-04-26 12:12:13"}, {"order": "860f0c4f", "score": 4, "created": "2018-01-05 00:00:00", "answered": "2018-01-11 16:34:04"}, {"order": "3054c6a8", "score": 1, "created": "2018-04-22 00:00:00", "answered": "2018-04-23 11:51:20"}, {"order": "217aad2f", "score": 5, "created": "2018-04-05 00:00:00", "answered": "2018-04-08 14:07:21"}, {"order": "f9618764", "score": 5, "created": "2017-11-30 00:00:00", "answered": "2017-11-30 22:43:08"}, {"order": "1800f4a4", "score": 4, "created": "2017-12-23 00:00:00", "answered": "2017-12-24 13:53:17"}, {"order": "c6b504c2", "score": 1, "created": "2018-03-11 00:00:00", "answered": "2018-03-11 11:52:26"}, {"order": "c63f4a1a", "score": 2, "created": "2017-11-07 00:00:00", "answered": "2017-11-08 12:52:25"}]}, "model": {"t": "2001-09-19", "n_past": 919, "n_after": 412, "rows": [{"driver": 1, "label": 0, "at_t": 0.025, "full": 0.002}, {"driver": 3, "label": 0, "at_t": 0.0436, "full": 0.1466}, {"driver": 7, "label": 0, "at_t": 0.0436, "full": 0.6343}, {"driver": 13, "label": 0, "at_t": 0.9128, "full": 0.8056}, {"driver": 14, "label": 0, "at_t": 0.007, "full": 0.0473}, {"driver": 17, "label": 0, "at_t": 0.025, "full": 0.0599}, {"driver": 20, "label": 0, "at_t": 0.2249, "full": 0.0959}, {"driver": 21, "label": 0, "at_t": 0.361, "full": 0.857}, {"driver": 22, "label": 1, "at_t": 0.0467, "full": 0.1754}, {"driver": 29, "label": 1, "at_t": 0.9413, "full": 0.9543}, {"driver": 30, "label": 1, "at_t": 0.0436, "full": 0.915}, {"driver": 34, "label": 0, "at_t": 0.7811, "full": 0.1458}, {"driver": 36, "label": 0, "at_t": 0.0172, "full": 0.0086}, {"driver": 43, "label": 0, "at_t": 0.0076, "full": 0.1244}, {"driver": 48, "label": 0, "at_t": 0.5541, "full": 0.1173}, {"driver": 49, "label": 0, "at_t": 0.006, "full": 0.0027}, {"driver": 54, "label": 0, "at_t": 0.4497, "full": 0.079}, {"driver": 55, "label": 0, "at_t": 0.0076, "full": 0.0846}, {"driver": 56, "label": 0, "at_t": 0.9105, "full": 0.7823}, {"driver": 58, "label": 0, "at_t": 0.0436, "full": 0.0096}, {"driver": 60, "label": 0, "at_t": 0.0436, "full": 0.0624}, {"driver": 61, "label": 0, "at_t": 0.0436, "full": 0.0096}]}, "agent": {"learns_from_data": {"ids": ["1", "3", "7", "13", "14", "17", "20", "21", "22", "29", "30", "34", "36", "43", "48", "49", "54", "55", "56", "58", "60", "61"], "anon_ids": ["1000003", "1000010", "1000017", "1000024", "1000031", "1000038", "1000045", "1000052", "1000059", "1000073", "1000080", "1000087", "1000094", "1000108", "1000122", "1000129", "1000136", "1000143", "1000150", "1000164", "1000178", "1000185"], "original": [0.025, 0.0436, 0.0436, 0.9128, 0.007, 0.025, 0.2249, 0.361, 0.0467, 0.9413, 0.0436, 0.7811, 0.0172, 0.0076, 0.5541, 0.006, 0.4497, 0.0076, 0.9105, 0.0436, 0.0436, 0.0436], "anon1": [0.025, 0.0436, 0.0436, 0.9128, 0.007, 0.025, 0.2249, 0.361, 0.0467, 0.9413, 0.0436, 0.7811, 0.0172, 0.0076, 0.5541, 0.006, 0.4497, 0.0076, 0.9105, 0.0436, 0.0436, 0.0436], "anon2": [0.025, 0.0436, 0.0436, 0.9128, 0.007, 0.025, 0.2249, 0.361, 0.0467, 0.9413, 0.0436, 0.7811, 0.0172, 0.0076, 0.5541, 0.006, 0.4497, 0.0076, 0.9105, 0.0436, 0.0436, 0.0436]}, "hashes_ids": {"ids": ["69", "229", "341", "352", "375", "456", "932", "1032", "1049", "1133", "1167", "1224"], "anon_ids": ["1000101", "1000234", "1000346", "1000367", "1000388", "1000409", "1000689", "1000766", "1000801", "1000920", "1000941", "1000983"], "original": [0.1689, 0.9455, 0.0009, 0.0035, 0.005, 0.0161, 0.9891, 0.0023, 0.9894, 0.0161, 0.575, 0.0871], "anon1": [0.1723, 0.9399, 0.0009, 0.0046, 0.0046, 0.0164, 0.9887, 0.0023, 0.9866, 0.0164, 0.5741, 0.0798], "anon2": [0.1753, 0.9457, 0.0005, 0.0037, 0.0045, 0.0159, 0.9909, 0.0021, 0.99, 0.0159, 0.5566, 0.0781]}}, "mutants": [{"dataset": "olist", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "olist", "operator": "drop_lower_bound", "before": "ev[TIME] > lo", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "olist", "operator": "extend_horizon", "before": "t + pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=4 * H)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "olist", "operator": "future_offset", "before": "t - pd.Timedelta(days=off)", "after": "t + pd.Timedelta(days=off)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "olist", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "LEAK", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "olist", "operator": "future_offset", "before": "t - pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "olist", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "LEAK", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "olist", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=ELIG)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "olist", "operator": "drop_cutoff", "before": "ev[TIME] <= hi", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "olist", "operator": "future_offset", "before": "t - pd.Timedelta(days=ELIG)", "after": "t + pd.Timedelta(days=ELIG)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "boundary_shift", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] >= t - pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "drop_lower_bound", "before": "ev[TIME] > lo", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "boundary_shift", "before": "ev[TIME] > lo", "after": "ev[TIME] >= lo", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "LEAK"}}, {"dataset": "northwind", "operator": "extend_horizon", "before": "t + pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=4 * H)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "northwind", "operator": "future_offset", "before": "t - pd.Timedelta(days=off)", "after": "t + pd.Timedelta(days=off)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "LEAK", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "boundary_shift", "before": "ev[TIME] <= t", "after": "ev[TIME] < t", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "future_offset", "before": "t - pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "LEAK", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=ELIG)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "drop_cutoff", "before": "ev[TIME] <= hi", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "northwind", "operator": "boundary_shift", "before": "ev[TIME] <= hi", "after": "ev[TIME] < hi", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "northwind", "operator": "future_offset", "before": "t - pd.Timedelta(days=ELIG)", "after": "t + pd.Timedelta(days=ELIG)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "boundary_shift", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] >= t - pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "drop_lower_bound", "before": "ev[TIME] > lo", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "boundary_shift", "before": "ev[TIME] > lo", "after": "ev[TIME] >= lo", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "LEAK"}}, {"dataset": "pkdd99", "operator": "extend_horizon", "before": "t + pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=4 * H)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "pkdd99", "operator": "future_offset", "before": "t - pd.Timedelta(days=off)", "after": "t + pd.Timedelta(days=off)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "LEAK", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "boundary_shift", "before": "ev[TIME] <= t", "after": "ev[TIME] < t", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "future_offset", "before": "t - pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "LEAK", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "boundary_shift", "before": "ev[TIME] <= t", "after": "ev[TIME] < t", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=ELIG)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "drop_cutoff", "before": "ev[TIME] <= hi", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "pkdd99", "operator": "boundary_shift", "before": "ev[TIME] <= hi", "after": "ev[TIME] < hi", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "pkdd99", "operator": "future_offset", "before": "t - pd.Timedelta(days=ELIG)", "after": "t + pd.Timedelta(days=ELIG)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "sakila", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "sakila", "operator": "drop_lower_bound", "before": "ev[TIME] > lo", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "sakila", "operator": "extend_horizon", "before": "t + pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=4 * H)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "sakila", "operator": "future_offset", "before": "t - pd.Timedelta(days=off)", "after": "t + pd.Timedelta(days=off)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "sakila", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "LEAK", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "sakila", "operator": "future_offset", "before": "t - pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "sakila", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "LEAK", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "sakila", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=ELIG)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "sakila", "operator": "drop_cutoff", "before": "ev[TIME] <= hi", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "sakila", "operator": "future_offset", "before": "t - pd.Timedelta(days=ELIG)", "after": "t + pd.Timedelta(days=ELIG)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "movietweetings", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "movietweetings", "operator": "drop_lower_bound", "before": "ev[TIME] > lo", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "movietweetings", "operator": "extend_horizon", "before": "t + pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=4 * H)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "movietweetings", "operator": "future_offset", "before": "t - pd.Timedelta(days=off)", "after": "t + pd.Timedelta(days=off)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "movietweetings", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "LEAK", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "movietweetings", "operator": "future_offset", "before": "t - pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "movietweetings", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "LEAK", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "movietweetings", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=ELIG)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "movietweetings", "operator": "drop_cutoff", "before": "ev[TIME] <= hi", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "movietweetings", "operator": "future_offset", "before": "t - pd.Timedelta(days=ELIG)", "after": "t + pd.Timedelta(days=ELIG)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "f1", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "f1", "operator": "drop_lower_bound", "before": "ev[TIME] > lo", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "f1", "operator": "extend_horizon", "before": "t + pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=4 * H)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "f1", "operator": "future_offset", "before": "t - pd.Timedelta(days=off)", "after": "t + pd.Timedelta(days=off)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "f1", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "LEAK", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "f1", "operator": "future_offset", "before": "t - pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "f1", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "LEAK", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "f1", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=ELIG)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "f1", "operator": "drop_cutoff", "before": "ev[TIME] <= hi", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "f1", "operator": "future_offset", "before": "t - pd.Timedelta(days=ELIG)", "after": "t + pd.Timedelta(days=ELIG)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "boundary_shift", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] >= t - pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "drop_lower_bound", "before": "ev[TIME] > lo", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "boundary_shift", "before": "ev[TIME] > lo", "after": "ev[TIME] >= lo", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "LEAK"}}, {"dataset": "tpch", "operator": "extend_horizon", "before": "t + pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=4 * H)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "tpch", "operator": "future_offset", "before": "t - pd.Timedelta(days=off)", "after": "t + pd.Timedelta(days=off)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "LEAK", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "boundary_shift", "before": "ev[TIME] <= t", "after": "ev[TIME] < t", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "future_offset", "before": "t - pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "LEAK", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "boundary_shift", "before": "ev[TIME] <= t", "after": "ev[TIME] < t", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=ELIG)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "boundary_shift", "before": "ev[TIME] > t - pd.Timedelta(days=ELIG)", "after": "ev[TIME] >= t - pd.Timedelta(days=ELIG)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "drop_cutoff", "before": "ev[TIME] <= hi", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "tpch", "operator": "boundary_shift", "before": "ev[TIME] <= hi", "after": "ev[TIME] < hi", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "tpch", "operator": "future_offset", "before": "t - pd.Timedelta(days=ELIG)", "after": "t + pd.Timedelta(days=ELIG)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "boundary_shift", "before": "ev[TIME] > t - pd.Timedelta(days=H)", "after": "ev[TIME] >= t - pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "drop_lower_bound", "before": "ev[TIME] > lo", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "extend_horizon", "before": "t + pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=4 * H)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "adventureworks", "operator": "future_offset", "before": "t - pd.Timedelta(days=off)", "after": "t + pd.Timedelta(days=off)", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "LEAK", "fit_predict": "LEAK", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "boundary_shift", "before": "ev[TIME] <= t", "after": "ev[TIME] < t", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "future_offset", "before": "t - pd.Timedelta(days=H)", "after": "t + pd.Timedelta(days=H)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "drop_cutoff", "before": "ev[TIME] <= t", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "LEAK", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "drop_lower_bound", "before": "ev[TIME] > t - pd.Timedelta(days=ELIG)", "after": "ev[TIME] > pd.Timestamp.min", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "drop_cutoff", "before": "ev[TIME] <= hi", "after": "ev[TIME] <= pd.Timestamp.max", "verdict": "KILLED", "pit_violation": true, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "LEAK", "make_label": "LEAK"}}, {"dataset": "adventureworks", "operator": "boundary_shift", "before": "ev[TIME] <= hi", "after": "ev[TIME] < hi", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}, {"dataset": "adventureworks", "operator": "future_offset", "before": "t - pd.Timedelta(days=ELIG)", "after": "t + pd.Timedelta(days=ELIG)", "verdict": "SURVIVED", "pit_violation": false, "layers": {"select_entities": "CLEAN", "get_features": "CLEAN", "fit_predict": "CLEAN", "make_label": "CLEAN"}}], "schema": {"heuristic": {"customers": {"unknown": ["customer_state"], "time_from": {"table": "orders", "key": "customer_id"}}, "order_items": {"time": "ts", "planned": ["shipping_limit_date"]}, "order_status_events": {"time": "ts", "unknown": ["status"]}, "orders": {"time": "order_purchase_timestamp", "self_available": ["order_approved_at", "order_delivered_carrier_date", "order_delivered_customer_date"], "planned": ["order_estimated_delivery_date"], "unknown": ["order_status"]}, "payments": {"time": "ts", "self_available": ["approved_at"]}, "products": {"static": true}, "reviews": {"time": "review_creation_date", "self_available": ["review_answer_timestamp"]}, "sellers": {"unknown": ["seller_state"], "static": true}}, "llm": {"orders": {"time": "order_purchase_timestamp", "self_available": ["order_approved_at", "order_delivered_carrier_date", "order_delivered_customer_date"], "planned": ["order_estimated_delivery_date"], "value_time": {"order_status": null}}, "order_items": {"time": "ts", "planned": ["shipping_limit_date"]}, "order_status_events": {"time": "ts"}, "payments": {"time": "ts", "self_available": ["approved_at"]}, "reviews": {"time": "review_answer_timestamp"}, "customers": {"time_from": {"table": "orders", "key": "customer_id"}}, "products": {"static": true, "unknown": ["product_category_name", "product_name_lenght", "product_description_lenght", "product_photos_qty"]}, "sellers": {"static": true, "unknown": ["seller_zip_code_prefix", "seller_city", "seller_state"]}}, "reasons": {"orders": "An order is created at purchase. order_purchase_timestamp is the earliest date column (2016-09-04 to 2018-09-20). The approval, carrier-handover and delivery dates are filled in later: they have nulls (0.2%, 1.7%, 2.8%), and the delivery date runs to 2018-10-17. Each is known only from its own value. order_estimated_delivery_date has no nulls and is midnight-only. It is the promise date set at purchase, so it is planned. order_status holds one value per order out of 7 (delivered, invoiced, shipped, ...). That is the final lifecycle state, not its history, so it is a snapshot valid only at end of data. Part of the history is in order_status_events.", "order_items": "Order lines have an added ts column (2016-10-04 to 2018-08-29). Its range fits the purchase times of orders that have items, and it starts before the earliest order_approved_at (2016-10-04 10:19), so it is not the approval time. shipping_limit_date is the seller's shipping deadline. It is written with the line and lies after ts, so it is planned. price and freight_value are fixed when the order is placed.", "order_status_events": "This is an event log with one row per (order_id, status, ts). Each row records a status change at its own ts, so status is the value of that event, not a mutable column. I dropped the draft's 'unknown' for status. The earliest ts (2016-09-04 21:15:19) equals the earliest order purchase time, which fits 'created' events at purchase. The log only covers 2016-09 to 2017-03 and shows 4 statuses (see questions).", "payments": "Each payment row belongs to an order and has its own ts (2016-10-03 to 2018-10-17). That range is close to the order purchase-time range, so ts looks like the checkout/payment time. approved_at is filled in later and is sometimes null (0.2%), so it is known only from its own value. Payment type, installments and value are chosen at checkout.", "reviews": "I deliberately keep this decision after the repeated warning. The warning says review_creation_date is earlier than the row time in 100% of rows. That is exactly what this schema expects; it does not show a mistake. review_creation_date is midnight-only and, per the Olist docs, is the date the satisfaction survey was sent. review_score, review_comment_title and review_comment_message do not exist until the customer answers, at review_answer_timestamp, which has no nulls and is always later. If review_creation_date were the row time, a pipeline at t could read a score the customer had not yet given. That would leak information, because scores are often prediction targets. A score cannot be marked self_available (that applies only to date columns), so the only safe choice is to make the whole row appear at the answer time. review_creation_date is always earlier than that, so it is already known when the row appears and needs no extra entry. One cost: the survey being 'sent but not yet answered' is not visible before the answer. That is the price of making sure the score is never visible too early.", "customers": "There is no date column. customer_id is unique in orders (20000 distinct of 20000), so Olist gives each order its own customer_id, and a customers row exists from its order's purchase time. I keep the inheritance after the repeated warning that only 20% of rows find a parent, because the warning comes from sampling. Both files are independent 20000-row samples of about 99.4k rows each, and 20000/99441 ≈ 20% is the match rate expected for a 1:1 key under independent sampling. In the full Olist data, customers and orders are 1:1 on customer_id. STRATA itself flags the check as sample-based, so it must be repeated on the full data (see questions). The rows are per order, so zip, city and state look like the address recorded with that order, not an overwritten current address. I therefore did not mark them unknown (to be confirmed).", "products": "This is a catalog with no date column and no time link, so I treat it as reference data. Weight and dimensions are physical properties, taken as stable. Category, name/description length and photo count are listing content that can be edited and has no history, so their value at time t is unknown.", "sellers": "This is a seller register with no date column and one row per seller (3095 rows). The address is a single current value with no history. The draft flagged only seller_state, but zip and city change together with it, so all three are unknown."}}};
+const PROG = {"leaky": "import numpy as np\nimport pandas as pd\n\n\ndef get_features(db, entity_ids, seed_time):\n    # Feature frame indexed by entity\n    features = pd.DataFrame(index=entity_ids)\n    \n    # Keep only orders up to the prediction time\n    items = db['order_items']\n    items = items[items['ts'] <= seed_time]\n    \n    # Keep only the requested products\n    items_target = items[items['product_id'].isin(entity_ids)]\n    \n    # ---- Sales features (order_items) ----\n    agg_items = items_target.groupby('product_id').agg(\n        sales_count=('order_id', 'count'),\n        sum_price=('price', 'sum'),\n        avg_price=('price', 'mean'),\n        sum_freight=('freight_value', 'sum'),\n        avg_freight=('freight_value', 'mean'),\n        first_purchase_ts=('ts', 'min'),\n        last_purchase_ts=('ts', 'max'),\n        n_sellers=('seller_id', 'nunique')\n    )\n    \n    features = features.join(agg_items, how='left')\n    \n    # Days since first and last purchase\n    features['days_since_first'] = (seed_time - features['first_purchase_ts']).dt.days.fillna(99999)\n    features['days_since_last'] = (seed_time - features['last_purchase_ts']).dt.days.fillna(99999)\n    \n    # Drop helper columns\n    features = features.drop(columns=['first_purchase_ts', 'last_purchase_ts'])\n    \n    # ---- Review features (reviews) ----\n    if not items_target.empty:\n        review_data = items_target[['order_id', 'product_id']].merge(\n            db['reviews'][['order_id', 'review_score']],\n            on='order_id',\n            how='left'\n        )\n        review_agg = review_data.groupby('product_id').agg(\n            review_mean_score=('review_score', 'mean'),\n            review_count=('review_score', 'count')\n        )\n        features = features.join(review_agg, how='left')\n    else:\n        features['review_mean_score'] = np.nan\n        features['review_count'] = 0\n    \n    # Fill gaps with zeros\n    features = features.fillna(0)\n    \n    # Flag: was the product sold before\n    features['was_sold'] = (features['sales_count'] > 0).astype(int)\n    \n    # Keep the row order of entity_ids\n    features = features.reindex(entity_ids)\n    \n    return features\n", "fixed": "import numpy as np\nimport pandas as pd\n\n\ndef get_features(db, entity_ids, seed_time):\n    # Feature frame indexed by entity\n    features = pd.DataFrame(index=entity_ids)\n    \n    # Keep only orders up to the prediction time\n    items = db['order_items']\n    items = items[items['ts'] <= seed_time]\n    \n    # Keep only the requested products\n    items_target = items[items['product_id'].isin(entity_ids)]\n    \n    # ---- Sales features (order_items) ----\n    agg_items = items_target.groupby('product_id').agg(\n        sales_count=('order_id', 'count'),\n        sum_price=('price', 'sum'),\n        avg_price=('price', 'mean'),\n        sum_freight=('freight_value', 'sum'),\n        avg_freight=('freight_value', 'mean'),\n        first_purchase_ts=('ts', 'min'),\n        last_purchase_ts=('ts', 'max'),\n        n_sellers=('seller_id', 'nunique')\n    )\n    \n    features = features.join(agg_items, how='left')\n    \n    # Days since first and last purchase\n    features['days_since_first'] = (seed_time - features['first_purchase_ts']).dt.days.fillna(99999)\n    features['days_since_last'] = (seed_time - features['last_purchase_ts']).dt.days.fillna(99999)\n    \n    # Drop helper columns\n    features = features.drop(columns=['first_purchase_ts', 'last_purchase_ts'])\n    \n    # ---- Review features (reviews) ----\n    if not items_target.empty:\n        review_data = items_target[['order_id', 'product_id']].merge(\n            db['reviews'].loc[db['reviews']['review_creation_date'] <= seed_time,\n                              ['order_id', 'review_score']],\n            on='order_id',\n            how='left'\n        )\n        review_agg = review_data.groupby('product_id').agg(\n            review_mean_score=('review_score', 'mean'),\n            review_count=('review_score', 'count')\n        )\n        features = features.join(review_agg, how='left')\n    else:\n        features['review_mean_score'] = np.nan\n        features['review_count'] = 0\n    \n    # Fill gaps with zeros\n    features = features.fillna(0)\n    \n    # Flag: was the product sold before\n    features['was_sold'] = (features['sales_count'] > 0).astype(int)\n    \n    # Keep the row order of entity_ids\n    features = features.reindex(entity_ids)\n    \n    return features\n", "status": "import numpy as np\nimport pandas as pd\n\n\ndef get_features(db: dict, entity_ids, seed_time) -> pd.DataFrame:\n    # prepare tables\n    orders = db[\"orders\"]\n    items = db[\"order_items\"]\n    reviews = db[\"reviews\"]\n    payments = db[\"payments\"]\n\n    # keep only orders up to the prediction time\n    items_sel = items[items[\"ts\"] <= seed_time].copy()\n\n    # drop canceled orders (if the status exists)\n    order_status = orders[[\"order_id\", \"order_status\"]].drop_duplicates(\"order_id\")\n    items_sel = items_sel.merge(order_status, on=\"order_id\", how=\"left\")\n    items_sel = items_sel[items_sel[\"order_status\"] != \"canceled\"]\n    items_sel = items_sel[items_sel[\"product_id\"].isin(entity_ids)]\n\n    # ---- 1. basic product aggregates ----\n    base = items_sel.groupby(\"product_id\").agg(\n        num_orders=(\"order_id\", \"nunique\"),\n        num_items=(\"order_id\", \"size\"),\n        total_price=(\"price\", \"sum\"),\n        total_freight=(\"freight_value\", \"sum\"),\n        avg_price=(\"price\", \"mean\"),\n        avg_freight=(\"freight_value\", \"mean\"),\n        num_sellers=(\"seller_id\", \"nunique\"),\n        last_order_ts=(\"ts\", \"max\")\n    ).reset_index()\n\n    # ---- 2. orders in the last 30/90/180 days ----\n    for days, col_name in [(30, \"orders_30d\"), (90, \"orders_90d\"), (180, \"orders_180d\")]:\n        cutoff = seed_time - pd.Timedelta(days=days)\n        cnt = items_sel[items_sel[\"ts\"] >= cutoff].groupby(\"product_id\").size().rename(col_name).reset_index()\n        base = base.merge(cnt, on=\"product_id\", how=\"left\")\n        base[col_name] = base[col_name].fillna(0).astype(int)\n\n    # ---- 3. review features (created before seed_time only) ----\n    reviews_sel = reviews[reviews[\"review_creation_date\"] <= seed_time]\n    items_rev = items_sel[[\"order_id\", \"product_id\"]].merge(\n        reviews_sel[[\"order_id\", \"review_score\"]], on=\"order_id\", how=\"inner\"\n    )\n    rev_agg = items_rev.groupby(\"product_id\").agg(\n        review_count=(\"review_score\", \"count\"),\n        avg_review_score=(\"review_score\", \"mean\"),\n        pos_review_rate=(\"review_score\", lambda x: (x >= 4).mean())\n    ).reset_index()\n    base = base.merge(rev_agg, on=\"product_id\", how=\"left\")\n\n    # ---- 4. payment features (per order, then per product) ----\n    pay_order = payments.groupby(\"order_id\").agg(\n        payment_sum=(\"payment_value\", \"sum\"),\n        payment_mean=(\"payment_value\", \"mean\"),\n        installments_mean=(\"payment_installments\", \"mean\"),\n        credit_card_share=(\"payment_type\", lambda x: (x == \"credit_card\").mean())\n    ).reset_index()\n\n    items_pay = items_sel[[\"order_id\", \"product_id\"]].merge(pay_order, on=\"order_id\", how=\"inner\")\n    pay_prod = items_pay.groupby(\"product_id\").agg(\n        avg_payment_sum=(\"payment_sum\", \"mean\"),\n        avg_payment_mean=(\"payment_mean\", \"mean\"),\n        avg_installments=(\"installments_mean\", \"mean\"),\n        avg_credit_card_share=(\"credit_card_share\", \"mean\")\n    ).reset_index()\n    base = base.merge(pay_prod, on=\"product_id\", how=\"left\")\n\n    # ---- 5. recency of the last order ----\n    last = pd.to_datetime(base[\"last_order_ts\"])\n    recency = (seed_time - last).dt.days\n    recency = recency.fillna(999)\n    base[\"recency_days\"] = recency\n    base = base.drop(columns=[\"last_order_ts\"])\n\n    # ---- reindex to the requested product_ids ----\n    base = base.set_index(\"product_id\")\n    result = base.reindex(entity_ids)\n\n    # fill gaps: reviews/payments/counts 0, recency a large value\n    if \"recency_days\" in result.columns:\n        result[\"recency_days\"] = result[\"recency_days\"].fillna(999)\n    result = result.fillna(0)\n\n    return result\n"};
+const SKILL = "---\nname: strata\ndescription: Check an ML pipeline over time-stamped data for point-in-time leakage (look-ahead, future leakage) layer by layer -- task table and labels, feature code, model training, in-context examples, and identity recall -- by running each layer on the data as it was at prediction time and as it is now. Use it whenever you write or review code that builds a prediction task, computes features, trains a model or assembles few-shot examples from data with timestamps, before you report a score, and whenever someone asks whether a pipeline \"uses the future\", leaks, or is point-in-time correct.\n---\n\n# STRATA: layered point-in-time checks\n\nSTRATA decides leakage by execution, not by reading code. Run it; do not\nreplace its verdict with your own reading. Install: `pip install -e <strata dir>`\n(gives the `strata` command; `python -m strata` works too).\n\n## 0. Describe the database once\n\n```bash\nstrata init --data <dir with .csv/.parquet> --out schema.json\n```\n\nThe draft lists every decision under `_review`. Confirm each one against the\ndata documentation and edit `schema.json`:\n\n- `time`: when a row becomes known. `time_from`: a table without its own time\n  inherits it through a key. `static`: a reference table.\n- `self_available`: a date column known only at its own value (delivery date).\n- `value_time`: `{column: stamp}` for a value filled in later than its row.\n- `unknown`: mutable columns without history (status). Never guess these away.\n- `entities`: `{name: {table, key, created}}`; `created` enables the task check.\n\n## 1. Check the layers you wrote\n\n| Layer | When | Command |\n|---|---|---|\n| task | you built a task table / labels | `strata check task --task T --time-col C --entity-col C --schema schema.json --entity E [--label-program f.py:label --horizon-days H]` |\n| features | you wrote `get_features(db, ids, t)` | `strata check features --schema schema.json --program f.py:get_features --entity E` |\n| model | you wrote a training script | `strata check model --data train.parquet --time-col C --entity-col C --target-col C --horizon-days H --cmd \"python solution.py --task-dir {task_dir} --split {split} --out {out}\"` |\n| icl | you select few-shot examples | `strata check icl --data pool.parquet ... --program f.py:predict` |\n| agent | the predictor calls an LLM or a lookup | `strata check agent --data train.parquet --query q.parquet ... --cmd ...` |\n\nContracts: `get_features(tables: dict[str, DataFrame], entity_ids, t) -> DataFrame`\nindexed by entity; `label(tables, entity_ids, t) -> Series`; `predict(history,\nquery) -> one score per query row`. A script is run with the placeholders\n`{task_dir}` (holds `train` and `val`/`test` files), `{split}`, `{out}` (CSV with\none numeric prediction column; name it with `--pred-col`), `{time_col}`,\n`{entity_col}`, `{target_col}`, `{train}`, `{query}`.\n\n## 2. Read the verdict\n\nExit code and the first line: `CLEAN` 0, `LEAK` 1, `UNCHECKABLE` 2, `ERROR` 3.\nUse `--json` or `--report r.json` for the machine-readable report.\n\n- `LEAK`: fix it. The witness names the time, the entity, the column and, for\n  features, the channel (table rows or a late-filled column) that carried the\n  future. Re-run the same command after the fix; only a re-run may declare it\n  fixed.\n- `UNCHECKABLE`: say so in your answer. Typical causes: the output depends on a\n  column with unknown availability, the entity has no creation time, the\n  program is nondeterministic (fix the seed and re-run).\n- `ERROR`: the program crashed in the sandbox; fix it and re-run.\n- `CLEAN`: no difference at the tested times. Report it as exactly that, not as\n  a proof that the pipeline is leak-free.\n\n## Safety\n\nSTRATA executes the code under test in a child process with a timeout and a\nmemory limit and strips `*API_KEY*`, `*TOKEN*`, `*SECRET*` variables from its\nenvironment. Do not pass credentials to it.\n";
+// name, domain, rows, leaks, correct n, rows-cut found, canary found, violations, harmless, feature-only kills
+const PB = [
+  ["Olist", "marketplace", "0.94M", 3, 2, 1, 2, 5, 5, 1], ["F1", "sports", "59k", 3, 1, 2, 2, 5, 5, 1],
+  ["PKDD'99", "banking", "1.08M", 5, 1, 2, 2, 6, 9, 1], ["AdventureWorks", "retail", "174k", 3, 1, 1, 2, 5, 8, 1],
+  ["Northwind", "wholesale", "3.2k", 3, 1, 1, 2, 6, 8, 1], ["Sakila", "rental", "39k", 3, 1, 1, 2, 5, 5, 1],
+  ["MovieTweetings", "recsys", "1.12M", 2, 1, 2, 2, 5, 5, 1], ["TPC-H", "order entry", "0.43M", 3, 1, 1, 2, 6, 10, 1],
+];
+
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sleep = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+const verdict = v => `<span class="verdict v-${v}">${v}</span>`;
+const colorize = t => esc(t).replace(/\b(LEAK|CLEAN|UNCHECKABLE|ERROR)\b/g, '<span class="$1">$1</span>');
+const shortCmd = c => c.replace(/--cmd "python ([^ ]+) [^"]*"/, '--cmd "python $1 … --out {out}"').replace(/demo\/strata\//g, "");
+const press = (group, btn) => group.forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+const onTheme = f => matchMedia("(prefers-color-scheme: dark)").addEventListener("change", f);
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2200) }
+function staticTerm(el, key) {
+  const r = REC[key];
+  el.innerHTML = `<div class="term"><span class="cmd">${esc(shortCmd(r.cmd))}</span>\n${colorize(r.stdout.replace(/demo\/strata\//g, ""))}\n<span class="dim">exit ${r.exit}  ${r.seconds}s</span></div>`;
+}
+
+/* python highlighting */
+const KW = new Set("and as assert break class continue def del elif else except False finally for from global if import in is lambda None nonlocal not or pass raise return True try while with yield".split(" "));
+function hl(line) {
+  let out = "", i = 0;
+  const m = re => { re.lastIndex = i; const r = re.exec(line); return r && r.index === i ? r[0] : null };
+  while (i < line.length) {
+    let t;
+    if (line[i] === "#") { out += `<span class="tk-com">${esc(line.slice(i))}</span>`; break }
+    if ((t = m(/[rbfu]?("""|'''|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/gy))) { out += `<span class="tk-str">${esc(t)}</span>`; i += t.length; continue }
+    if ((t = m(/\d[\d_]*(\.\d+)?/gy))) { out += `<span class="tk-num">${t}</span>`; i += t.length; continue }
+    if ((t = m(/[A-Za-z_]\w*/gy))) { const call = /^\s*\(/.test(line.slice(i + t.length));
+      out += KW.has(t) ? `<span class="tk-kw">${t}</span>` : call ? `<span class="tk-fn">${t}</span>` : t; i += t.length; continue }
+    out += esc(line[i]); i++;
+  }
+  return out;
+}
+function diff(a, b) {
+  const A = a.split("\n"), B = b.split("\n"), n = A.length, m = B.length;
+  const L = Array.from({length: n + 1}, () => new Int32Array(m + 1));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  const ops = []; let i = 0, j = 0;
+  while (i < n || j < m) {
+    if (i < n && j < m && A[i] === B[j]) { ops.push([" ", A[i], j]); i++; j++ }
+    else if (j < m && (i >= n || L[i][j + 1] >= L[i + 1][j])) { ops.push(["+", B[j], j]); j++ }
+    else { ops.push(["-", A[i], -1]); i++ }
+  }
+  return ops;
+}
+
+/* time slider */
+(function () {
+  const T = DATA.timeline, svg = $("#timeline");
+  const d = s => new Date(s.replace(" ", "T") + "Z").getTime();
+  const lo = d("2017-09-01 00:00:00"), hi = d("2018-08-01 00:00:00");
+  const X = v => 40 + (v - lo) / (hi - lo) * 580;
+  const orders = T.orders.map(o => ({...o, t: d(o.ts)}));
+  const reviews = T.reviews.map(r => ({...r, c: d(r.created)}));
+  const byOrder = Object.fromEntries(orders.map(o => [o.order, o]));
+  $("#tProduct").textContent = T.product;
+  function draw(tv) {
+    let g = `<line x1="40" x2="620" y1="190" y2="190" stroke="${css("--line")}"/>`;
+    for (let m = new Date(lo), i = 0; m.getTime() <= hi; m.setUTCMonth(m.getUTCMonth() + 1), i++)
+      if (i % 2 === 0) g += `<text x="${X(m.getTime())}" y="210" text-anchor="middle">${m.toISOString().slice(0, 7)}</text>`;
+    g += `<text x="40" y="38">orders</text><text x="40" y="118">reviews</text>`;
+    orders.forEach(o => g += `<circle cx="${X(o.t)}" cy="60" r="7" fill="${o.t <= tv ? css("--accent") : css("--line")}"><title>order ${o.order}, ${o.ts}</title></circle>`);
+    reviews.forEach(r => {
+      const o = byOrder[r.order], past = o && o.t <= tv, seen = r.c <= tv;
+      const col = !past ? css("--line") : seen ? css("--unk") : css("--leak");
+      if (o) g += `<line x1="${X(o.t)}" y1="67" x2="${X(r.c)}" y2="134" stroke="${col}" stroke-dasharray="3 3"/>`;
+      g += `<rect x="${X(r.c) - 6}" y="134" width="12" height="12" rx="2" fill="${col}"><title>review of ${r.order}: ${r.score} stars, written ${r.created.slice(0, 10)}</title></rect><text x="${X(r.c)}" y="160" text-anchor="middle">${r.score}★</text>`;
+    });
+    g += `<line x1="${X(tv)}" x2="${X(tv)}" y1="22" y2="196" stroke="${css("--ink")}" stroke-width="2"/><text x="${X(tv) + 6}" y="30" style="fill:${css("--ink")}">t</text>`;
+    svg.innerHTML = g;
+    const pastOrders = new Set(orders.filter(o => o.t <= tv).map(o => o.order));
+    const naive = reviews.filter(r => pastOrders.has(r.order)), cut = naive.filter(r => r.c <= tv);
+    const mean = a => a.length ? (a.reduce((s, r) => s + r.score, 0) / a.length).toFixed(2) : "0";
+    const rows = [["review_count", naive.length, cut.length], ["review_mean_score", mean(naive), mean(cut)], ["sales_count", pastOrders.size, pastOrders.size]];
+    $("#tTable").innerHTML = rows.map(([n, a, b]) => `<tr><td class="mono">${n}</td><td class="${String(a) !== String(b) ? "diffcell" : ""}">${a}</td><td>${b}</td></tr>`).join("");
+    const leak = naive.length !== cut.length, v = $("#tVerdict");
+    v.className = "verdict v-" + (leak ? "LEAK" : "CLEAN"); v.textContent = leak ? "LEAK" : "CLEAN";
+    $("#tNote").textContent = leak ? `${naive.length - cut.length} review(s) of past orders were written after t. The program counts them; in the data as of t they do not exist yet. STRATA reports this difference as the witness.`
+      : "At this t every review of a past order was already written, so both values agree. At other times they may not.";
+    $("#tLabel").textContent = new Date(tv).toISOString().slice(0, 10);
+  }
+  const slider = $("#tSlider"), start = d("2018-01-01 00:00:00");
+  slider.value = Math.round((start - lo) / (hi - lo) * 100);
+  const val = () => lo + slider.value / 100 * (hi - lo);
+  slider.addEventListener("input", () => draw(val()));
+  draw(start); onTheme(() => draw(val()));
+})();
+
+/* hero: the first lines of a real run */
+(function () {
+  const r = REC.leak, lines = r.stdout.replace(/demo\/strata\//g, "").split("\n");
+  const w = lines.find(l => l.includes("witness: {")) || "";
+  $("#heroTerm").innerHTML = `<span class="cmd">${esc(shortCmd(r.cmd))}</span>\n${colorize(lines[0])}\n${colorize(lines[1])}\n${colorize(w)}\n<span class="dim">exit ${r.exit}</span>`;
+})();
+
+/* schema */
+(function () {
+  const S = DATA.schema; let draft = "llm", table = "orders";
+  const names = Object.keys(S.llm);
+  const SHORT = {
+    orders: "A row appears at purchase. The approval, handover and delivery dates have gaps and run past the last purchase, so they are filled in later. order_status holds one final value per order: the state at the end of the data. Part of the history is in order_status_events.",
+    order_items: "Order lines carry their own ts, which fits the purchase times of their orders. shipping_limit_date is the seller's deadline, written with the line, so it is a planned date.",
+    order_status_events: "One row per status change with its own time, so each status is known from that time. The log covers only 2016-09 to 2017-03.",
+    payments: "Each payment has its own ts, close to the purchase time. approved_at is filled in later.",
+    reviews: "The score and the comments do not exist until the customer answers, so a review appears at review_answer_timestamp. review_creation_date is the day the survey was sent.",
+    customers: "No date column. Each order has its own customer_id, so a customer row appears with its order.",
+    products: "A catalog without dates. Weight and size are stable. Category, name and photo count can be edited without history, so their value at t is unknown.",
+    sellers: "One row per seller with the current address and no history, so zip, city and state at t are unknown.",
+  };
+  const fmt = v => Array.isArray(v) ? v.join(", ")
+    : Object.entries(v).map(([k, x]) => `${k} (known only at the end of the data)`).join(", ");
+  const LABEL = { self_available: "filled in later", planned: "planned date, known with the row", value_time: "overwritten, latest value only", unknown: "may change, no history" };
+  function render() {
+    $("#schemaTables").innerHTML = names.map(n => `<button type="button" data-t="${n}" aria-pressed="${n === table}">${n}</button>`).join("");
+    $$("#schemaTables button").forEach(b => b.addEventListener("click", () => { table = b.dataset.t; render() }));
+    const spec = S[draft][table];
+    if (!spec) { $("#schemaDec").innerHTML = `<dt>table</dt><dd>not in this draft</dd>`; $("#schemaReason").textContent = ""; return }
+    const rows = [["row appears at", spec.time || (spec.time_from ? `time of its ${spec.time_from.table} row` : "always present")]];
+    for (const k of ["self_available", "planned", "value_time", "unknown"])
+      if (spec[k] && (Array.isArray(spec[k]) ? spec[k].length : Object.keys(spec[k]).length)) rows.push([LABEL[k], fmt(spec[k])]);
+    $("#schemaDec").innerHTML = rows.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join("");
+    $("#schemaReason").innerHTML = draft === "llm" ? (SHORT[table] ? `<b>Agent's reason, shortened.</b> ${esc(SHORT[table])}` : "")
+      : "Rules: the earliest date column is when a row appears, later dates are filled in later, status-like text may change.";
+  }
+  const btns = $$("[data-draft]");
+  btns.forEach(b => b.addEventListener("click", () => { draft = b.dataset.draft; press(btns, b); render() }));
+  render(); staticTerm($("#t-init"), "init");
+})();
+
+/* features: a small workbench */
+(function () {
+  const term = $("#featTerm"), diagEl = $("#diag"), runBtn = $("#runFeat");
+  const st = { prog: "leak", fixed: false, busy: false, marks: {} };
+  const code = () => st.prog === "status" ? PROG.status : st.fixed ? PROG.fixed : PROG.leaky;
+  const recKey = () => st.prog === "status" ? "status" : st.fixed ? "fixed" : "leak";
+  function renderCode() {
+    const lines = code().split("\n");
+    $("#progCode").innerHTML = lines.map((l, k) => `<div class="ln ${st.marks[k] || ""}"><i>${k + 1}</i><span>${hl(l) || " "}</span></div>`).join("");
+    $("#fname").textContent = st.prog === "status" ? "status_features.py" : "features.py";
+    $("#fstate").textContent = st.prog === "status" ? "as written" : st.fixed ? "fix applied" : "as written";
+    const first = Object.keys(st.marks)[0];
+    const box = $("#progCode"); if (first !== undefined) { const el = box.children[first]; box.scrollTop = Math.max(0, el.offsetTop - box.offsetTop - 100) } else box.scrollTop = 0
+  }
+  function mark(pred, cls) { st.marks = {}; code().split("\n").forEach((l, k) => { if (pred(l)) st.marks[k] = cls }) }
+  const IDLE = `<span class="idle"><span class="cmd"></span><span class="caret"></span></span>`;
+  function drop(el) { if (!el) return; const p = el.previousSibling; el.remove(); if (p && p.nodeType === 3 && p.nodeValue === "\n") p.remove() }
+  function tline(html) { drop(term.querySelector(".idle")); term.insertAdjacentHTML("beforeend", "\n" + html); term.scrollTop = term.scrollHeight }
+  function idle() { tline(IDLE) }
+  async function typeCmd(cmd) {
+    tline(`<span class="cmd"></span>`); const c = term.lastElementChild;
+    for (let i = 0; i <= cmd.length; i += Math.max(3, Math.ceil(cmd.length / 40))) { c.textContent = cmd.slice(0, i); await sleep(12) }
+    c.textContent = cmd;
+  }
+  function witnesses(stdout) { return [...stdout.matchAll(/witness: (\{.*\})/g)].map(m => { try { return JSON.parse(m[1].replace(/NaN/g, "null")) } catch (e) { return null } }).filter(Boolean) }
+  function card(key) {
+    const r = REC[key], v = ["CLEAN", "LEAK", "UNCHECKABLE", "ERROR"][r.exit];
+    let body = "";
+    if (v === "LEAK") {
+      const w = witnesses(r.stdout);
+      const ch = [...new Set(w.flatMap(x => x.channels))];
+      body = `<p>The program reads reviews written after the prediction time. ${ch.length ? `The difference comes from the <span class="mono">${esc(ch.join(", "))}</span> table.` : ""}</p>
+        <div class="tablebox"><table><tr><th>t</th><th>product</th><th>feature</th><th>full data</th><th>data as of t</th></tr>
+        ${w.slice(0, 5).map(x => `<tr><td>${x.time.slice(0, 10)}</td><td class="mono">${esc(String(x.row).slice(0, 10))}</td><td class="mono">${esc(x.column)}</td><td class="bad">${(+x.full).toFixed(2)}</td><td class="good">${(+x.at_t).toFixed(2)}</td></tr>`).join("")}</table></div>
+        <div><p class="cap" style="margin-bottom:4px">Suggested fix</p><div class="diff">${diff(PROG.leaky, PROG.fixed).filter((o, k, a) => o[0] !== " " || a.slice(Math.max(0, k - 2), k + 3).some(p => p[0] !== " ")).map(o => `<div class="${o[0] === "+" ? "a" : o[0] === "-" ? "d" : "c"}">${o[0]} ${esc(o[1])}</div>`).join("")}</div></div>
+        <div class="row"><button type="button" class="primary" id="applyFix">Apply fix</button></div>`;
+    } else if (v === "CLEAN") {
+      body = `<p>Same result on the full data and on the data as of every tested time, also on the canary. The fix holds.</p>`;
+    } else {
+      body = `<p>The program filters orders by <span class="mono">order_status</span>. Olist keeps only the latest status of each order and no record of earlier ones. To check the program, STRATA would have to rebuild the status each order had at <i>t</i>, and that information is not in the data.</p>
+        <p>So STRATA changes this column on purpose and sees that the output follows it. The program may be correct or may leak, and the data cannot tell which. Reporting CLEAN here would be a guess, so the verdict is UNCHECKABLE. The fix is in the data: use a table of status changes with dates, if one exists.</p>`;
+    }
+    diagEl.innerHTML = `<article class="card ${v}"><div class="card-h">${verdict(v)}<b>${st.prog === "status" ? "status_features.py" : "features.py"}</b><span class="meta">${st.fixed && st.prog === "leak" ? "after fix, " : ""}exit ${r.exit}</span></div><div class="card-b">${body}</div></article>`;
+    const ap = $("#applyFix"); if (ap) ap.onclick = applyFix;
+  }
+  async function run() {
+    if (st.busy) return; st.busy = true; runBtn.disabled = true;
+    const key = recKey(), r = REC[key];
+    await typeCmd(shortCmd(r.cmd));
+    tline(`<span class="dim">checking… </span>`); await sleep(900); drop(term.lastElementChild);
+    for (const l of r.stdout.replace(/demo\/strata\//g, "").split("\n")) { tline(colorize(l)); await sleep(40) }
+    tline(`<span class="dim">exit ${r.exit}  ${r.seconds}s</span>`);
+    idle();
+    card(key);
+    if (key === "leak") { mark(l => l.includes("db['reviews'][["), "wit"); renderCode() }
+    if (key === "status") { mark(l => l.includes("order_status"), "unk"); renderCode() }
+    st.busy = false; runBtn.disabled = false;
+  }
+  function applyFix() {
+    st.fixed = true;
+    const add = new Set(diff(PROG.leaky, PROG.fixed).filter(o => o[0] === "+").map(o => o[2]));
+    st.marks = {}; add.forEach(k => st.marks[k] = "add"); renderCode();
+    tline(`<span class="dim"># fix applied: reviews are now cut at their creation date</span>`); idle();
+    diagEl.querySelector(".row").innerHTML = `<button type="button" class="primary" id="rerun">▶ Run check again</button>`;
+    $("#rerun").onclick = run;
+  }
+  const btns = $$("[data-prog]");
+  btns.forEach(b => b.addEventListener("click", () => {
+    st.prog = b.dataset.prog; st.fixed = false; st.marks = {}; press(btns, b); renderCode();
+    diagEl.innerHTML = `<div class="empty">Press “Run check”.</div>`;
+  }));
+  runBtn.addEventListener("click", run);
+  renderCode();
+})();
+
+/* model */
+(function () {
+  const M = DATA.model, svg = $("#dumbbell"); let sort = "shift";
+  document.querySelectorAll("#model .lede").forEach(p => p.innerHTML = p.innerHTML.replace("{N_AFTER}", M.n_after));
+  const auc = key => { const pos = M.rows.filter(r => r.label), neg = M.rows.filter(r => !r.label); let s = 0;
+    pos.forEach(p => neg.forEach(n => s += p[key] > n[key] ? 1 : p[key] === n[key] ? .5 : 0)); return (s / (pos.length * neg.length)).toFixed(2) };
+  $("#modelAuc").textContent = `quality (AUC): ${auc("at_t")} without later results, ${auc("full")} with them`;
+  function draw() {
+    const rows = [...M.rows].sort((a, b) => sort === "shift" ? Math.abs(b.full - b.at_t) - Math.abs(a.full - a.at_t) : a.driver - b.driver);
+    const h = 24 + rows.length * 18, X = v => 100 + v * 510;
+    let g = "";
+    [0, .25, .5, .75, 1].forEach(v => g += `<text x="${X(v)}" y="${h + 6}" text-anchor="middle">${v}</text><line x1="${X(v)}" x2="${X(v)}" y1="8" y2="${h - 10}" stroke="${css("--line")}" stroke-dasharray="2 4"/>`);
+    rows.forEach((r, i) => { const y = 16 + i * 18;
+      g += `<text x="10" y="${y + 4}">driver ${r.driver}${r.label ? " ■" : ""}</text>`;
+      g += `<line x1="${X(r.at_t)}" x2="${X(r.full)}" y1="${y}" y2="${y}" stroke="${css("--leak")}" stroke-width="2" opacity=".5"/>`;
+      g += `<circle cx="${X(r.at_t)}" cy="${y}" r="4.5" fill="${css("--muted")}"><title>driver ${r.driver}: ${r.at_t} from results known at t</title></circle>`;
+      g += `<circle cx="${X(r.full)}" cy="${y}" r="4.5" fill="${css("--leak")}"><title>driver ${r.driver}: ${r.full} with later results</title></circle>` });
+    svg.setAttribute("viewBox", `0 0 630 ${h + 14}`); svg.innerHTML = g;
+  }
+  const btns = $$("[data-sort]");
+  btns.forEach(b => b.addEventListener("click", () => { sort = b.dataset.sort; press(btns, b); draw() }));
+  draw(); onTheme(draw); staticTerm($("#t-model"), "model");
+})();
+
+/* agent */
+(function () {
+  let which = "learns_from_data";
+  const TEXT = {
+    learns_from_data: "Script A gives the same predictions for real IDs, for the first renaming and for the second. It learns only from the data. Verdict: CLEAN.",
+    hashes_ids: "Script B turns the ID text into numbers and feeds them to the model as a feature. Its predictions differ between the two made-up renamings, so the difference comes from the spelling of the IDs and says nothing about recall of real users. Verdict: UNCHECKABLE. Removing the raw IDs from the features makes the script checkable.",
+  };
+  function show() {
+    const A = DATA.agent[which], n = Math.min(10, A.ids.length);
+    $("#agentRows").innerHTML = Array.from({length: n}, (_, i) => {
+      const o = A.original[i], a1 = A.anon1[i], a2 = A.anon2[i];
+      return `<tr><td class="mono">${esc(A.ids[i])}</td><td class="mono">${esc(A.anon_ids[i])}</td><td>${o.toFixed(4)}</td><td class="${Math.abs(o - a1) > 1e-6 ? "diffcell" : ""}">${a1.toFixed(4)}</td><td class="${Math.abs(a1 - a2) > 1e-6 ? "diffcell" : ""}">${a2.toFixed(4)}</td></tr>`;
+    }).join("");
+    $("#agentVerdict").innerHTML = verdict(which === "hashes_ids" ? "UNCHECKABLE" : "CLEAN");
+    $("#agentText").textContent = TEXT[which];
+    staticTerm($("#t-agent"), which === "hashes_ids" ? "agent_hashed" : "agent");
+  }
+  const btns = $$("[data-agent]");
+  btns.forEach(b => b.addEventListener("click", () => { which = b.dataset.agent; press(btns, b); show() }));
+  show();
+})();
+
+/* task */
+(function () {
+  const w = [...REC.task.stdout.matchAll(/"entity": (\d+), "row_time": "([^"]+)", "created": "([^"]+)"/g)];
+  $("#taskRows").innerHTML = w.map(m => `<tr><td class="mono">${m[1]}</td><td class="mono">${m[2].slice(0, 10)}</td><td class="mono bad">${m[3].slice(0, 10)}</td></tr>`).join("");
+  staticTerm($("#t-task"), "task");
+})();
+
+/* results */
+(function () {
+  let det = "strata";
+  const NOTE = {
+    strata: "STRATA finds every leaking program and every leaking change, and flags none of the correct programs or harmless changes.",
+    rows: "Cutting rows misses dates filled in later and overwritten values. It finds the leaks that come from late rows only.",
+    canary: "Hiding late dates helps, but overwritten values (snapshots) still get through on every database.",
+    feat: "Most leaking changes sit in the label window or the training code, so a check of the features alone misses them.",
+    any: "Every leaking change is caught, but so is every harmless one. This checker cannot tell them apart.",
+  };
+  const NA = `<td class="small">not tested</td>`;
+  const cell = (v, n, hitIsGood) => v === null ? NA : `<td class="${v === n ? (hitIsGood ? "good" : "bad") : v === 0 ? (hitIsGood ? "bad" : "good") : "warn"}">${v} of ${n}</td>`;
+  function render() {
+    const tot = {f: 0, l: 0, c: 0, k: 0, v: 0, h: 0, hn: 0};
+    const ctrl = det === "strata" || det === "rows" || det === "canary", muts = det === "strata" || det === "feat" || det === "any";
+    $("#pbRows").innerHTML = PB.map(([n, dom, rows, leaks, corr, cut, can, viol, harm, feat]) => {
+      const found = !ctrl ? null : det === "rows" ? cut : det === "canary" ? can : leaks;
+      const killed = !muts ? null : det === "feat" ? feat : viol;
+      const flagged = !muts ? null : det === "any" ? harm : 0;
+      tot.f += found ?? 0; tot.l += leaks; tot.c += corr; tot.k += killed ?? 0; tot.v += viol; tot.h += flagged ?? 0; tot.hn += harm;
+      return `<tr><td>${n}</td><td>${dom}</td><td>${rows}</td>${cell(found, leaks, true)}${ctrl ? `<td class="good">0 of ${corr}</td>` : NA}${cell(killed, viol, true)}${cell(flagged, harm, false)}</tr>`;
+    }).join("") + `<tr><td><b>Total</b></td><td></td><td></td><td><b>${ctrl ? `${tot.f} of ${tot.l}` : "not tested"}</b></td><td><b>${ctrl ? `0 of ${tot.c}` : "not tested"}</b></td><td><b>${muts ? `${tot.k} of ${tot.v}` : "not tested"}</b></td><td><b>${muts ? `${tot.h} of ${tot.hn}` : "not tested"}</b></td></tr>`;
+    $("#detNote").textContent = NOTE[det];
+  }
+  const btns = $$("[data-det]");
+  btns.forEach(b => b.addEventListener("click", () => { det = b.dataset.det; press(btns, b); render() }));
+  render();
+
+  const M = DATA.mutants;
+  $("#mutOp").innerHTML = ["all", ...new Set(M.map(m => m.operator))].map(o => `<option>${o}</option>`).join("");
+  $("#mutDs").innerHTML = ["all", ...new Set(M.map(m => m.dataset))].map(o => `<option>${o}</option>`).join("");
+  function mut() {
+    const op = $("#mutOp").value, tr = $("#mutTruth").value, ds = $("#mutDs").value;
+    const rows = M.filter(m => (op === "all" || m.operator === op) && (ds === "all" || m.dataset === ds) && (tr === "all" || (tr === "v") === !!m.pit_violation));
+    const v = rows.filter(m => m.pit_violation), h = rows.filter(m => !m.pit_violation);
+    const vk = v.filter(m => m.verdict === "KILLED").length, hk = h.filter(m => m.verdict === "KILLED").length;
+    $("#mutSummary").textContent = `${rows.length} changed pipelines in this view. STRATA caught ${vk} of the ${v.length} leaks and flagged ${hk} of the ${h.length} harmless changes.`;
+    $("#mutList").innerHTML = rows.map(m => `<div class="m"><span class="small">${esc(m.dataset)}<br>${esc(m.operator)}<br><b>${m.pit_violation ? "leak" : "harmless"}</b></span><code><del>− ${esc(m.before)}</del><br><ins>+ ${esc(m.after)}</ins></code>${verdict(m.verdict === "KILLED" ? "LEAK" : "CLEAN")}</div>`).join("");
+  }
+  ["#mutOp", "#mutTruth", "#mutDs"].forEach(s => $(s).addEventListener("change", mut));
+  mut();
+})();
+
+/* skill download */
+(function () {
+  const dl = () => { try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([SKILL], {type: "text/markdown"})); a.download = "SKILL.md"; document.body.appendChild(a); a.click(); a.remove(); toast("SKILL.md downloaded") } catch (e) { toast("Download is blocked here") } };
+  $("#skillTop").onclick = dl;
+})();
+
+/* highlight the current section */
+(function () {
+  const links = $$(".links a");
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) links.forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + e.target.id)) }), {rootMargin: "-40% 0px -55% 0px"});
+  links.forEach(a => io.observe($(a.getAttribute("href"))));
+})();
+</script>
+</body>
+</html>
