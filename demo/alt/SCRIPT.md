@@ -1,6 +1,6 @@
 # STRATA, альтернативное демо: сценарий видео (ICSE 2027 Tool Demonstration)
 
-Идея: вместо скролл-страницы с туториалом показать один рабочий интерфейс.
+Идея: один рабочий интерфейс на весь ролик.
 Слева редактор кода, справа диагноз и консоль. Все выводы консоли: настоящие
 прогоны `strata` CLI (перенесены из `demo/strata_scroll_demo.html`).
 
@@ -52,11 +52,11 @@
 
 ### 1. Проектная страница (0:00–0:18)
 **Действие:** `about.html`, верх страницы, курсор не двигать.
-> STRATA finds where a machine learning pipeline reads the future. Coding agents now write whole pipelines over time-stamped data. The code runs, the score looks good, and the model can still use facts that appeared after the prediction time. STRATA runs the code on the data as it is and on the data as it was at time t, and reports where the two disagree.
+> Your pipeline may be peeking at the future, and STRATA shows you where. Coding agents now write whole pipelines over time-stamped data. The code runs, the score looks good, and the model can still use facts that appeared after the prediction time. STRATA runs the code on the data as it is and on the data as it was at time t, and reports where the two disagree.
 
 ### 2. Рабочий стол (0:18–0:32)
 **Действие:** клик «Open the demo». Открывается `index.html` с `feature_program.py`. Курсор медленно слева направо: редактор, диагноз, консоль.
-> This is the workbench. On the left, a feature program that a code model wrote for the Olist marketplace. On the right, the diagnosis and a console. Nothing here is simulated: every console output is a recorded strata run on the real data.
+> This is the workbench. On the left, a feature program that a code model wrote for the Olist marketplace. On the right, the diagnosis and a console. Every console output is a recorded strata run on the real data.
 
 ### 3. LEAK (0:32–0:50)
 **Действие:** клик «Run check». Команда печатается, вывод, карточка LEAK. Курсор на таблицу свидетелей, затем на подсвеченные строки 38–42 в редакторе.
@@ -68,19 +68,19 @@
 
 ### 5. UNCHECKABLE (1:06–1:24)
 **Действие:** в «Example» выбрать «Features that drop cancelled orders». Клик «Run check». Курсор на список колонок в карточке.
-> A second program drops cancelled orders. Olist keeps only the latest status, so the status at time t cannot be rebuilt from the data. STRATA answers uncheckable and lists the output columns that depend on it, instead of a false clean.
+> A second program drops cancelled orders. Olist keeps only the latest status, so the status at time t cannot be rebuilt from the data. STRATA answers uncheckable and lists the output columns that depend on it.
 
 ### 6. Схема (1:24–1:42)
-**Действие:** клик «Schema». Клик «With the LLM agent». Клик по таблице `orders`. Курсор на текст обоснования, затем на строку `order_status · snapshot`. Закрыть.
+**Действие:** клик «Schema». Клик «With the LLM agent». Клик по таблице `orders`. Курсор на текст обоснования, затем на строку `order_status`, snapshot. Закрыть.
 > Where does STRATA know this from? From the availability schema, drafted from the raw files. With the LLM agent, every decision comes with a reason, and the order status is marked as a snapshot that is valid only at the end of the data.
 
 ### 7. Модель (1:42–2:06)
 **Действие:** «Database» → RelBench F1, пример «Agent-written training script». Клик «Run check». Курсор на верхние строки графика, затем на строку с AUC.
-> The model layer. An agent-written training script for RelBench Formula One, run exactly as it is, with and without the four hundred and twelve race results that came after t. Predictions move by up to zero point eight seven, and the AUC jumps from zero point seven one to zero point nine three. A high score alone proves nothing.
+> The model layer. An agent-written training script for RelBench Formula One, run exactly as it is, with and without the four hundred and twelve race results that came after t. Predictions move by up to zero point eight seven, and the AUC jumps from zero point seven one to zero point nine three. The metric alone would have missed this.
 
 ### 8. Агент (2:06–2:24)
 **Действие:** «Database» → RelBench Event, единственный пример. Клик «Run check». Курсор на красные ячейки.
-> The agent layer replaces every ID with a made-up one, twice. This script turns the IDs into numbers, so the two renamings disagree with each other. That is a dependence on spelling, not knowledge of real users, and the answer is uncheckable rather than a false alarm.
+> The agent layer replaces every ID with a made-up one, twice. This script turns the IDs into numbers, so the two renamings disagree with each other. The output depends on the spelling of the ID, identity recall cannot be separated from that, and the answer is uncheckable.
 
 ### 9. Задача (2:24–2:32)
 **Действие:** «Database» → Shop. Клик «Run check». Курсор на красные даты.

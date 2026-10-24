@@ -182,18 +182,18 @@ code, pre, .mono { font-family: var(--mono) }
   <div class="sheet-head"><h2>What is STRATA?</h2><span class="spacer" style="flex:1"></span><button class="ghost" data-close>Close</button></div>
   <div class="sheet-body">
     <h3>The problem</h3>
-    <p>Coding agents now write whole ML pipelines over relational data with timestamps. The code runs, the tests pass, the score looks good. A model built to predict what happens after a date <i>t</i> can still use facts that only appeared after <i>t</i>. Offline it looks excellent; in production it fails, and nothing in the code or the metric shows why. This is a point-in-time (PIT) leak.</p>
+    <p>Coding agents now write whole ML pipelines over relational data with timestamps. The code runs, the tests pass, the score looks good. A model built to predict what happens after a date <i>t</i> can still use facts that only appeared after <i>t</i>. The offline score is inflated, and nothing in the code or the metric shows why. This is a point-in-time (PIT) leak.</p>
     <p>The future can get in at five places, and a check of one place passes a pipeline that leaks in another:</p>
     <div class="places">
       <div><b>task</b> rows for entities that do not exist yet at <i>t</i>; labels used before they are complete</div>
       <div><b>features</b> rows created after <i>t</i>; dates filled in later; values overwritten at the end of the data</div>
       <div><b>model</b> training rows whose outcome was not known at <i>t</i></div>
       <div><b>in-context</b> few-shot examples for an LLM taken from after <i>t</i></div>
-      <div><b>agent</b> a model that recognises an entity instead of learning about it from the data</div>
+      <div><b>agent</b> a model that knows an entity from outside the data</div>
     </div>
     <h3>One rule for all five</h3>
     <div class="rule">output on D &nbsp;=&nbsp; output on D as of <i>t</i></div>
-    <p>STRATA never reads the code. It runs each layer on the full database and on the database as it was at <i>t</i> (rows that did not exist yet removed, values filled in later blanked) and compares the outputs. A difference is a LEAK with a witness: the time, the entity, the column and the channel that carried the future. No difference at the tested times is CLEAN. If the output depends on a column whose availability nobody knows, the verdict is UNCHECKABLE, never a false CLEAN.</p>
+    <p>STRATA never reads the code. It runs each layer on the full database and on the database as it was at <i>t</i> (rows that did not exist yet removed, values filled in later blanked) and compares the outputs. A difference is a LEAK with a witness: the time, the entity, the column and the channel that carried the future. No difference at the tested times is CLEAN. If the output depends on a column whose availability nobody knows, the verdict is UNCHECKABLE.</p>
     <h3>How it is built</h3>
     <svg class="flow" viewBox="0 0 1000 170" id="flow">
       <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8b98a9"/></marker></defs>
@@ -211,17 +211,17 @@ code, pre, .mono { font-family: var(--mono) }
     <p style="color:var(--muted);font-size:12.5px">Mutants: one time comparison changed at a time in a reference pipeline, each labelled by hand as a leak or harmless. Weaker detectors: cutting rows at <i>t</i> finds 11 of 25 leaking control programs, adding late dates and a canary finds 16, and both miss every overwritten value.</p>
     <h3>Use it from a coding agent</h3>
     <p>Install the package, drop <code>SKILL.md</code> into the agent's skills, and it will run the check before reporting a score. The skill says which check to call for which layer, how to read a witness, and that only a rerun may declare a leak fixed.</p>
-    <p><button class="primary" data-skill>Download SKILL.md</button> &nbsp; <a href="about.html">Project page</a> · <a href="#" id="lnkRepo2">GitHub</a> · <a href="#" id="lnkPaper2">Paper (ICSE 2027 demo)</a> · <a href="https://github.com/PavelMarian/PITBench">PITBench</a></p>
+    <p><button class="primary" data-skill>Download SKILL.md</button> &nbsp; <a href="about.html">Project page</a> &nbsp; <a href="#" id="lnkRepo2">GitHub</a> &nbsp; <a href="#" id="lnkPaper2">Paper (ICSE 2027 demo)</a> &nbsp; <a href="https://github.com/PavelMarian/PITBench">PITBench</a></p>
   </div>
 </div></div>
 
 <!-- Schema viewer -->
 <div class="modal" id="schema"><div class="sheet">
-  <div class="sheet-head"><h2>Availability schema · <span id="schemaDb">Olist</span></h2>
+  <div class="sheet-head"><h2>Availability schema: <span id="schemaDb">Olist</span></h2>
     <span class="seg" id="schemaMode"><button aria-pressed="true" data-mode="heuristic">Rules only</button><button aria-pressed="false" data-mode="llm">With the LLM agent</button></span>
     <span style="flex:1"></span><button class="ghost" data-close>Close</button></div>
   <div class="sheet-body">
-    <p style="color:var(--muted);margin-top:0">When does a row appear, and which values arrive later? <code>strata init</code> drafts this from the raw files. Click a table to see the agent's reason. Dashed line: a table inherits its time through a key. <span class="r-time">row time</span> · <span class="r-self">late</span>: known only at its own value · <span class="r-plan">planned</span>: known with the row · <span class="r-unk">unknown</span>: mutable without history · <span class="r-snap">snapshot</span>: valid only at the end of the data.</p>
+    <p style="color:var(--muted);margin-top:0">When does a row appear, and which values arrive later? <code>strata init</code> drafts this from the raw files. Click a table to see the agent's reason. Dashed line: a table inherits its time through a key. Roles: <span class="r-time">row time</span>; <span class="r-self">late</span>, known only at its own value; <span class="r-plan">planned</span>, known with the row; <span class="r-unk">unknown</span>, mutable without history; <span class="r-snap">snapshot</span>, valid only at the end of the data.</p>
     <div class="schema-wrap"><svg class="wires" id="wires"></svg><div class="schema-grid" id="schemaGrid"></div></div>
     <div class="reason" id="reason"><p style="color:var(--muted)">Click a table.</p></div>
   </div>
@@ -240,10 +240,10 @@ function toast(t) { const d = document.createElement("div"); d.className = "toas
 
 // ---------- examples: every one is a recorded strata run ----------
 const DBS = {
-  olist: {name: "Olist marketplace · 8 tables"},
-  f1: {name: "RelBench F1 · driver-top3"},
-  event: {name: "RelBench Event · user-ignore"},
-  shop: {name: "Shop · synthetic, 3 tables"},
+  olist: {name: "Olist marketplace, 8 tables"},
+  f1: {name: "RelBench F1, driver-top3"},
+  event: {name: "RelBench Event, user-ignore"},
+  shop: {name: "Shop, synthetic, 3 tables"},
 };
 const EX = [
   {id: "leaky", db: "olist", layer: "features", title: "Product features written by a code model", file: "feature_program.py", meta: "written by a code model from a task description", kind: "code", code: () => PROG.leaky, rec: "leak",
@@ -256,13 +256,13 @@ const EX = [
    explain: "The same output on the full database and on the database as of every tested time, for the witness run, the canary (future rewritten with marker values) and the unknown-column probe."},
   {id: "status", db: "olist", layer: "features", title: "Features that drop cancelled orders", file: "status_features.py", meta: "written by a code model; reads order_status", kind: "code", code: () => PROG.status, rec: "status",
    mark: l => l.includes("order_status"),
-   explain: "Olist stores one <code>order_status</code> per order and overwrites it. The status an order had at <i>t</i> cannot be rebuilt from the data, so the schema marks the column <b>unknown</b>. The program may be correct or may leak, and the data cannot tell which: STRATA says so instead of passing it."},
-  {id: "model", db: "f1", layer: "model", title: "Agent-written training script · does it learn from later races?", file: "run.sh", meta: "solution.py by a commercial coding agent, run 1 of 9", kind: "run", rec: "model",
+   explain: "Olist stores one <code>order_status</code> per order and overwrites it. The status an order had at <i>t</i> cannot be rebuilt from the data, so the schema marks the column <b>unknown</b>. The program may be correct or may leak, and the data cannot tell which, so that is the verdict."},
+  {id: "model", db: "f1", layer: "model", title: "Agent-written training script: does it learn from later races?", file: "run.sh", meta: "solution.py by a commercial coding agent, run 1 of 9", kind: "run", rec: "model",
    explain: "The script is run as it is, once with the race results known at the prediction time and once with the 412 results that came later. Grey: prediction without the later rows. Red: with them. The script trains on the whole table it is given and never bounds it by the 30-day label horizon."},
-  {id: "agent", db: "f1", layer: "agent", title: "Same script · does it recognise the drivers?", file: "run.sh", meta: "every driverId replaced by a made-up one, twice", kind: "run", rec: "agent",
+  {id: "agent", db: "f1", layer: "agent", title: "Same script: does it recognise the drivers?", file: "run.sh", meta: "every driverId replaced by a made-up one, twice", kind: "run", rec: "agent",
    explain: "Both anonymisations keep order and equality, so a model that learns only from the data cannot tell them from the real IDs. The predictions do not move: no recall of real drivers."},
   {id: "agent_hashed", db: "event", layer: "agent", title: "Agent-written script that turns user IDs into numbers", file: "run.sh", meta: "solution.py by the same agent, run 2, RelBench Event", kind: "run", rec: "agent_hashed",
-   explain: "The two made-up renamings disagree with each other, so the output depends on how IDs are <b>spelled</b> (a numeric or hashed ID feature). That is not knowledge of real users, and identity recall cannot be separated from it: UNCHECKABLE rather than a false alarm."},
+   explain: "The two made-up renamings disagree with each other, so the output depends on how IDs are <b>spelled</b> (a numeric or hashed ID feature). Identity recall cannot be separated from that dependence, so the verdict is UNCHECKABLE."},
   {id: "task", db: "shop", layer: "task", title: "A prediction table with customers who do not exist yet", file: "task.csv", meta: "rows: (ts, customer_id, label)", kind: "task", rec: "task",
    explain: "Three rows predict customers on 2020-06-01, but those customers sign up later. A row like this tells the model that the customer will exist. STRATA compares every task row with the entity's creation date from the schema."},
 ];
@@ -300,7 +300,7 @@ function renderRun(ex) {
   const cmd = shortCmd(r.cmd).replace(/ --/g, " \\\n    --");
   const files = ex.db === "f1" ? [["driver-top3_history.parquet", "race results: date, driverId, qualifying (top-3 label), 1 331 rows"], ["solution.py", "written by the agent: reads {task_dir}, fits a model, writes {out}"]]
             : [["user-ignore_past.parquet / _query.parquet", "events: timestamp, user, target"], ["solution.py", "written by the agent, run 2"]];
-  const sh = `# ${ex.title}\n# The script is not edited. STRATA only changes which rows it sees.\n${cmd}\n`;
+  const sh = `# ${ex.title}\n# The script runs unchanged. STRATA changes only which rows it sees.\n${cmd}\n`;
   return renderCode(sh, null) + `<div class="datatable" style="flex:none;border-top:1px solid var(--line)"><table><tr><th>file</th><th>what it is</th></tr>${files.map(f => `<tr><td>${f[0]}</td><td style="font-family:var(--font)">${f[1]}</td></tr>`).join("")}</table>
     <p class="note">Placeholders <code>{task_dir} {split} {out}</code> are filled by STRATA for each database state. The script source is in the replication package.</p></div>`;
 }
@@ -314,7 +314,7 @@ function load(id) {
   exSel.value = id; dbSel.value = cur.db;
   $("#fileName").textContent = cur.file; $("#layerChip").textContent = cur.layer; $("#fileMeta").textContent = cur.meta; $("#fileHint").textContent = "";
   $("#editor").innerHTML = cur.kind === "code" ? renderCode(state.code, null) : cur.kind === "run" ? renderRun(cur) : renderTask();
-  $("#diag").innerHTML = `<div class="empty">Press <b>Run check</b>.<br><span style="font-size:12.5px">${cur.layer} layer · ${esc(DBS[cur.db].name)}</span></div>`; $("#diagMeta").textContent = "";
+  $("#diag").innerHTML = `<div class="empty">Press <b>Run check</b>.<br><span style="font-size:12.5px">${cur.layer} layer, ${esc(DBS[cur.db].name)}</span></div>`; $("#diagMeta").textContent = "";
   $("#term").innerHTML = '<span class="dimline">$ </span><span class="cursor"></span>';
   $("#run").disabled = false;
 }
@@ -329,7 +329,7 @@ async function typeRun(rec) {
   await sleep(350);
   let body = typed + esc(cmd) + "</span>\n";
   for (const line of rec.stdout.split("\n")) { body += colorize(line) + "\n"; term.innerHTML = body + '<span class="cursor"></span>'; term.scrollTop = term.scrollHeight; await sleep(line.startsWith("  witness") ? 120 : 70); }
-  body += `<span class="dimline">exit ${rec.exit} · ${rec.seconds} s</span>\n`;
+  body += `<span class="dimline">exit ${rec.exit}, ${rec.seconds} s</span>\n`;
   term.innerHTML = body + '<span class="dimline">$ </span><span class="cursor"></span>'; term.scrollTop = term.scrollHeight;
 }
 const witnesses = rec => rec.stdout.split("\n").filter(l => l.trim().startsWith("witness:")).map(l => JSON.parse(l.slice(l.indexOf("{"))));
@@ -338,11 +338,11 @@ const verdictOf = rec => (rec.stdout.match(/\b(LEAK|CLEAN|UNCHECKABLE|ERROR)\b/)
 // ---------- diagnosis ----------
 function diagnose(ex, rec) {
   const v = verdictOf(rec), w = witnesses(rec);
-  let html = `<div class="card"><div class="vrow">${V(v)}<span class="what">${ex.layer} layer · ${w.length ? w.length + " witness" + (w.length > 1 ? "es" : "") : v === "CLEAN" ? "no difference at the tested times" : "cannot be decided"}</span></div><p>${ex.explain}</p></div>`;
+  let html = `<div class="card"><div class="vrow">${V(v)}<span class="what">${ex.layer} layer, ${w.length ? w.length + " witness" + (w.length > 1 ? "es" : "") : v === "CLEAN" ? "no difference at the tested times" : "cannot be decided"}</span></div><p>${ex.explain}</p></div>`;
   if (ex.layer === "features" && v === "LEAK") {
     html += `<div class="card"><h3>Witnesses</h3><table class="wit"><tr><th>t</th><th>column</th><th>product</th><th>on D</th><th>as of t</th><th>channel</th></tr>${w.map((x, i) => `<tr class="${i === 0 ? "hot" : ""}"><td>${x.time.slice(0, 10)}</td><td>${x.column}</td><td>${x.row.slice(0, 8)}…</td><td class="full">${+x.full.toFixed(3)}</td><td class="att">${+x.at_t.toFixed(3)}</td><td>${x.channels.length ? x.channels.join(", ") : "—"}</td></tr>`).join("")}</table>
       <p style="color:var(--muted);font-size:12.5px;margin-top:8px">Channel: the one table whose rows, cut at <i>t</i>, make the difference disappear. The canary also fires on <code>review_mean_score</code>: the future rewritten with marker values still changes it.</p></div>`;
-    html += `<div class="card"><h3>Suggested fix · ${ex.fix.title}</h3><div class="diff">${ex.fix.diff.map(d => `<span class="${d[0]}">${d[0] === "del" ? "- " : d[0] === "add" ? "+ " : "  "}${esc(d[1])}</span>`).join("")}</div><button class="primary" id="applyFix">Apply fix</button> <span style="color:var(--muted);font-size:12.5px">then run the check again; only a rerun may declare it fixed</span></div>`;
+    html += `<div class="card"><h3>Suggested fix: ${ex.fix.title}</h3><div class="diff">${ex.fix.diff.map(d => `<span class="${d[0]}">${d[0] === "del" ? "- " : d[0] === "add" ? "+ " : "  "}${esc(d[1])}</span>`).join("")}</div><button class="primary" id="applyFix">Apply fix</button> <span style="color:var(--muted);font-size:12.5px">then run the check again; only a rerun may declare it fixed</span></div>`;
   }
   if (ex.layer === "features" && v === "UNCHECKABLE") {
     const cols = (rec.stdout.match(/unknown\s+UNCHECKABLE columns=([^\n]+)/) || [])[1] || "";
@@ -352,7 +352,7 @@ function diagnose(ex, rec) {
   if (ex.layer === "model") html += modelCard(w[0]);
   if (ex.layer === "agent") html += agentCard(ex.id === "agent" ? AGENT.learns_from_data : AGENT.hashes_ids, v);
   if (ex.layer === "task") html += `<div class="card"><h3>Witnesses</h3><table class="wit"><tr><th>customer</th><th>row time</th><th>created</th><th>too early by</th></tr>${w.map(x => `<tr><td>${x.entity}</td><td>${x.row_time.slice(0, 10)}</td><td class="full">${x.created.slice(0, 10)}</td><td>${Math.round((new Date(x.created) - new Date(x.row_time)) / 864e5)} days</td></tr>`).join("")}</table></div>`;
-  $("#diag").innerHTML = html; $("#diagMeta").textContent = `exit ${rec.exit} · ${rec.seconds} s`;
+  $("#diag").innerHTML = html; $("#diagMeta").textContent = `exit ${rec.exit}, ${rec.seconds} s`;
   const b = $("#applyFix"); if (b) b.onclick = applyFix;
 }
 function modelCard(w) {
@@ -366,7 +366,7 @@ function modelCard(w) {
   s += "</svg>";
   return `<div class="card"><h3>Prediction per driver at t = ${MODEL.t}</h3>${s}<div class="legend"><span><i style="background:#8b98a9"></i>history ≤ t (${MODEL.n_past} rows)</span><span><i style="background:#ff6b5e"></i>+ ${MODEL.n_after} later rows</span><span>★ actually in top 3</span></div>
     <table class="wit" style="margin-top:10px"><tr><th>max |Δ score|</th><th>AUC at t</th><th>AUC with later rows</th><th>largest move</th></tr><tr><td class="full">${w.score_full && (Math.abs(w.score_full - w.score_at_t)).toFixed(2)}</td><td>0.711</td><td class="full">0.930</td><td>driver #${w.entity}: ${w.score_at_t.toFixed(3)} → ${w.score_full.toFixed(3)}</td></tr></table>
-    <p style="color:var(--muted);font-size:12.5px;margin-top:8px">A high score alone proves nothing: in 10 of 27 such runs the AUC did not rise, and the verdict rests on the outputs.</p></div>`;
+    <p style="color:var(--muted);font-size:12.5px;margin-top:8px">In 10 of 27 such runs the AUC did not rise, so the verdict rests on the outputs.</p></div>`;
 }
 function agentCard(a, v) {
   const d = (p, q) => Math.abs(p - q) > 0.0005;
@@ -378,7 +378,7 @@ async function applyFix() {
   $("#applyFix").disabled = true; toast("Fix applied: reviews cut at review_creation_date");
   await sleep(300);
   exSel.value = next.id; cur = next; state = {code: next.code(), ran: false};
-  $("#fileName").textContent = next.file; $("#fileMeta").textContent = next.meta; $("#fileHint").textContent = "modified · run the check again";
+  $("#fileName").textContent = next.file; $("#fileMeta").textContent = next.meta; $("#fileHint").textContent = "modified, run the check again";
   $("#editor").innerHTML = renderCode(state.code, next.mark, "fix");
   const el = $("#editor .ln.fix"); if (el) el.scrollIntoView({block: "center", behavior: reduce ? "auto" : "smooth"});
   $("#diag").innerHTML = `<div class="empty">Fix applied. Press <b>Run check</b> again.<br><span style="font-size:12.5px">Only a rerun may declare a leak fixed.</span></div>`;
@@ -410,7 +410,7 @@ const EXTRA_SCHEMAS = {
 const ROLE = {time: ["row time", "r-time"], self_available: ["late", "r-self"], planned: ["planned", "r-plan"], unknown: ["unknown", "r-unk"], value_time: ["snapshot", "r-snap"]};
 let schemaMode = "heuristic";
 function drawSchema() {
-  const db = cur.db; $("#schemaDb").textContent = DBS[db].name.split(" ·")[0];
+  const db = cur.db; $("#schemaDb").textContent = DBS[db].name.split(",")[0];
   const tables = db === "olist" ? SCHEMA[schemaMode] : EXTRA_SCHEMAS[db];
   $("#schemaMode").style.visibility = db === "olist" ? "visible" : "hidden";
   const grid = $("#schemaGrid"); grid.innerHTML = "";

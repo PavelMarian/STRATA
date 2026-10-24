@@ -44,10 +44,10 @@ th { color: var(--muted); font-weight: 500 }
 </head>
 <body>
 <main>
-  <h1>STRATA finds where an ML pipeline reads the future.</h1>
+  <h1>Your ML pipeline may be peeking at the future. STRATA shows you where.</h1>
   <p class="lead">A checker for pipelines over time-stamped relational data, made for code that coding agents write. It runs your code on the data as it is and as it was at prediction time, and tells you where the two disagree.</p>
   <p class="authors">Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky<br><span>AI Institute, ITMO University</span></p>
-  <a class="cta" href="index.html">Open the demo <small>a workbench with recorded runs on real data, nothing to install</small></a>
+  <a class="cta" href="index.html">Open the demo <small>a workbench with recorded runs on real data, runs in the browser</small></a>
   <div class="links">
     <a href="#" id="repo">Source code</a>
     <a href="#" id="paper">Paper (ICSE 2027 tool demo)</a>
@@ -63,12 +63,12 @@ th { color: var(--muted); font-weight: 500 }
   <p>You build a model to predict what happens to a customer, a product or a driver after a date <i>t</i>. Every number the model sees for that prediction must have been known at <i>t</i>. A review written a week later, a delivery date filled in after the fact, an order status overwritten at the end of the data, a training row whose outcome came after <i>t</i>: each of these makes the offline score look better than the model will ever be in production.</p>
 
   <h2>Why is this a problem now?</h2>
-  <p>Coding agents write whole pipelines over relational databases, often ones nobody has annotated. The code runs, the tests pass and the metric is high. In our corpus, every one of 27 agent-written training scripts on RelBench learns from rows after the prediction time, and a metric gain would not have shown it: the AUC rose in only 17 of them.</p>
+  <p>Coding agents write whole pipelines over relational databases, often ones nobody has annotated. The code runs, the tests pass and the metric is high. In our corpus, every one of 27 agent-written training scripts on RelBench learns from rows after the prediction time. The metric alone would have missed it: the AUC rose in 17 of the 27 runs.</p>
 
   <h2>What does STRATA do about it?</h2>
   <p>It never reads the code. For each layer of the pipeline it runs the code twice, on the full database and on the database as it was at <i>t</i>, and compares the outputs.</p>
   <pre><code>output on D  =  output on D as of t</code></pre>
-  <p>A difference is a <span class="verd v-leak">LEAK</span> with a witness: the time, the entity, the column and the channel that carried the future. No difference at the tested times is <span class="verd v-clean">CLEAN</span>. If the output depends on a column whose availability nobody knows, the answer is <span class="verd v-unk">UNCHECKABLE</span>, never a false pass.</p>
+  <p>A difference is a <span class="verd v-leak">LEAK</span> with a witness: the time, the entity, the column and the channel that carried the future. No difference at the tested times is <span class="verd v-clean">CLEAN</span>. If the output depends on a column whose availability nobody knows, the answer is <span class="verd v-unk">UNCHECKABLE</span>.</p>
 
   <h2>Which layers?</h2>
   <table>
@@ -77,7 +77,7 @@ th { color: var(--muted); font-weight: 500 }
     <tr><td>features</td><td>rows created after <i>t</i>; dates filled in later; values overwritten at the end of the data</td><td><code>strata check features</code></td></tr>
     <tr><td>model</td><td>training rows whose outcome was not known at <i>t</i></td><td><code>strata check model</code></td></tr>
     <tr><td>in-context</td><td>few-shot examples for an LLM taken from after <i>t</i></td><td><code>strata check icl</code></td></tr>
-    <tr><td>agent</td><td>a model that recognises an entity instead of learning about it from the data</td><td><code>strata check agent</code></td></tr>
+    <tr><td>agent</td><td>a model that knows an entity from outside the data</td><td><code>strata check agent</code></td></tr>
   </table>
 
   <h2>What does it need from me?</h2>
@@ -106,7 +106,7 @@ strata check features --schema schema.json --program feats.py:get_features --ent
   </div>
 
   <p style="margin-top:40px"><a class="cta" href="index.html">Open the demo</a></p>
-  <p class="foot">Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky · AI Institute, ITMO University<br>STRATA 0.1.0 · Python, pandas · 38 tests · ICSE 2027 Tool Demonstration and Data Showcase</p>
+  <p class="foot">Pavel Marian, Stanislav Chumakov, Danil Ezhov, Alexander Boukhanovsky. AI Institute, ITMO University.<br>STRATA 0.1.0, Python and pandas, 38 tests. ICSE 2027 Tool Demonstration and Data Showcase.</p>
 </main>
 </body>
 </html>
